@@ -1,0 +1,37 @@
+{
+  "name": "@wavelace/formula",
+  "version": "0.1.0",
+  "description": "LaTeX in, a fast JavaScript function out: the formula layer of Wavelace, the animated maths visualiser.",
+  "keywords": [
+    "latex",
+    "math",
+    "maths",
+    "formula",
+    "parser",
+    "compiler",
+    "expression"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "types": "./index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://www.wavelace.com/documentation",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielemoraschi/wavelace-packages.git",
+    "directory": "formula"
+  }
+}

@@ -1,0 +1,47 @@
+# Publish a package when its tag arrives (formula-v0.1.0): test it, publish it to npm with provenance, and
+# release it here. Everything in this repo is generated in the Wavelace source and sent with the tag, this
+# file included, so a change made here is overwritten by the next version.
+# npm: trusted publishing (OIDC), once the package names this workflow as its trusted publisher. Until then,
+# for the very first version only, the repository secret NPM_TOKEN; delete it once the publisher is set.
+# A failed run is re-run here, never sent again: a version already on npm is skipped, and the release still made.
+name: Publish
+on:
+  push:
+    tags: ["formula-v*"]
+permissions:
+  contents: write   # the release
+  id-token: write   # npm's trusted publishing, and the provenance statement
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: An npm that publishes through OIDC
+        run: npm install -g npm@^11.5.1
+      - name: The tag names the version the package says
+        run: |
+          version=$(node -p "require('./formula/package.json').version")
+          test "formula-v$version" = "$GITHUB_REF_NAME"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Test
+        run: node --test formula/formula.test.mjs   # the file: given a folder, node --test runs it as one empty test and passes
+      - name: Publish
+        working-directory: formula
+        run: |
+          if npm view "@wavelace/formula@$VERSION" version > /dev/null 2>&1; then
+            echo "already on npm, so this is a re-run: on to the release"
+          else
+            npm publish --provenance --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "@wavelace/formula $VERSION" \
+            --notes "Published to npm with provenance: https://www.npmjs.com/package/@wavelace/formula/v/$VERSION"
+        env:
+          GH_TOKEN: ${{ github.token }}
