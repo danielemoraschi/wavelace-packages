@@ -5,7 +5,7 @@ own under the MIT licence.
 
 | Package | What it is |
 |---|---|
-| [@wavelace/formula](formula) | LaTeX in, a fast JavaScript function out: the formula layer. |
+| [@wavelace/formula](formula) | LaTeX in, a fast JavaScript function out: the formula layer, and its React pieces at `@wavelace/formula/react`. |
 
 Everything here is generated from the Wavelace source, which is private, and sent with the tag that
 publishes it: a package's folder, this README and the workflow. So a change made here is overwritten

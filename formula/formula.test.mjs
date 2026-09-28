@@ -7,10 +7,11 @@ import {readFileSync} from "node:fs";
 import * as formula from "./index.js";
 
 const here = file => readFileSync(new URL(file, import.meta.url), "utf8");
+// the names a declaration file exports: apiNames in the Wavelace source's tools/pkg.js, which is not shipped here
+const namesDeclaredIn = file => [...here(file).matchAll(/^export (?:declare )?(?:function|const) ([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
 
 test("exports every name its declarations promise", () => {
-  // apiNames in the Wavelace source's tools/pkg.js, which is not shipped here
-  const declared = [...here("index.d.ts").matchAll(/^export (?:declare )?(?:function|const) ([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
+  const declared = namesDeclaredIn("index.d.ts");
   assert.ok(declared.length >= 10);
   for(const name of declared) assert.notStrictEqual(formula[name], undefined, name);
 });
@@ -32,4 +33,18 @@ test("refuses a typo rather than guess", () => {
 
 test("prints the plate", () => {
   assert.strictEqual(formula.pretty("\\int_0^x \\cos(u^2) du"), "∫₀^x cos(u²) du");
+});
+
+// The React subpath, under the React the publish step installs beside the package. Rendered to markup, which
+// needs no page: that it imports, renders and answers is what this proves; how it behaves while a reader
+// types is held in the Wavelace source, under a page.
+test("the React subpath exports what it declares, and renders", async () => {
+  const [react, {createElement}, {renderToStaticMarkup}] = await Promise.all([import("./react.js"), import("react"), import("react-dom/server")]);
+  const declared = namesDeclaredIn("react.d.ts");
+  assert.deepStrictEqual(declared.sort(), Object.keys(react).sort());
+  const Probe = () => createElement("output", null, react.useFormula("k x", {k: 2}).fn(3, 0, 0, 0, 0, 0, 0, 0));
+  assert.strictEqual(renderToStaticMarkup(createElement(Probe)), "<output>6</output>");
+  assert.match(renderToStaticMarkup(createElement(react.Plate, {formula: "x^2"})), /^<span style="font-family:&quot;CMU Serif&quot;.*">x²<\/span>$/);
+  assert.match(renderToStaticMarkup(createElement(react.FormulaField, {defaultValue: "x", "aria-label": "f"})),
+    /^<input aria-label="f" type="text" spellCheck="false" aria-invalid="false" value="x"\/><span id="[^"]+" aria-live="polite"><\/span>$/);
 });
