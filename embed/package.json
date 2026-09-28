@@ -1,0 +1,53 @@
+{
+  "name": "@wavelace/embed",
+  "version": "0.1.0",
+  "description": "Wavelace's animated maths plots in your page: an iframe of any preset or formula, from a few options.",
+  "keywords": [
+    "math",
+    "maths",
+    "visualisation",
+    "plot",
+    "animation",
+    "embed",
+    "iframe",
+    "latex"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./react": {
+      "types": "./react.d.ts",
+      "import": "./react.js",
+      "default": "./react.js"
+    }
+  },
+  "types": "./index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "react.js",
+    "react.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "homepage": "https://www.wavelace.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielemoraschi/wavelace-packages.git",
+    "directory": "embed"
+  }
+}
