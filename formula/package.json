@@ -1,6 +1,6 @@
 {
   "name": "@wavelace/formula",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "LaTeX in, a fast JavaScript function out: the formula layer of Wavelace, the animated maths visualiser.",
   "keywords": [
     "latex",

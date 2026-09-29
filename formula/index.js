@@ -1,4 +1,4 @@
-/*! @wavelace/formula 0.2.0 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/formula.js */
+/*! @wavelace/formula 0.2.1 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/formula.js */
 const window = {};
 /* Wavelace · latex — a LaTeX subset translated into the formula language
  * reads:   nothing
@@ -99,6 +99,7 @@ const callShape = head => `${head}(${BINDERS[head].parts.join(", ")})`;
 // nothing) while mod(x, 2) is a call like any other. The invariant: every function-valued key of
 // ENV in formula.js belongs here.
 const CALLABLE = new Set([...FUNCTIONS, ...BINDER_NAMES, "mod"]);
+const BARE_FUNCTIONS = new Set(FUNCTIONS);              // the ones applyFunctions lets take a bare atom
 // sin^{-1} is asin, not 1/sin — only the names INVERSE lists; anything else carrying a ^{-1} is
 // refused by name (applyFunctions), since reading it as a reciprocal would be a guess.
 const INVERSE = {sin:"asin", cos:"acos", tan:"atan", sinh:"asinh", cosh:"acosh", tanh:"atanh"};
@@ -170,11 +171,18 @@ function operandStart(text, k, sign){
 // where the operand starting at text[i] ends: the mirror of operandStart. A bracket group, or a
 // known function with its own bracket taken whole, or else an atom. Only a name the language knows
 // absorbs what follows it, which is what keeps e^t(x) meaning exp(t)·x while e^sin(x) is exp(sin(x)).
+// A bare function takes its own operand with it, and its power, so \sin\sqrt x and e^√x are
+// sin(√x) and exp(√x) rather than a function used as a value, which draws NaN without a refusal.
 function operandEnd(text, i){
   const m = TOKEN.exec(text.slice(i));
   if(m && CALLABLE.has(m[0])){
     const call = skipSpaces(text, i + m[0].length);
     if(text[call] === "(") return groupEnd(text, call);
+    if(BARE_FUNCTIONS.has(m[0])){
+      const from = text[call] === "^" ? skipSpaces(text, powerEnd(text, call)) : call;
+      const end = operandEnd(text, from);
+      if(end > from) return end;
+    }
   }
   return atomEnd(text, i);
 }
@@ -498,11 +506,12 @@ function translateEuler(text){
     const euler = text[i] === "e" && text[i + 1] === "^" && !LETTER_BEFORE_E.test(text[i - 1] || "");
     if(!euler){ out += text[i++]; continue; }
     // one leading minus is part of the exponent: e^-x is exp(-x), as e^{-x} already was. Taken here
-    // rather than by widening atomEnd, which would also decide what \sin -x means.
-    const k = skipSpaces(text, i + 2), signed = text[k] === "-", from = signed ? k + 1 : k;
+    // rather than by widening atomEnd, which would also decide what \sin -x means. The operand is
+    // sought past a space after the sign as well, which is what a command leaves: e^-\theta, e^-√x.
+    const k = skipSpaces(text, i + 2), signed = text[k] === "-", from = signed ? skipSpaces(text, k + 1) : k;
     const end = operandEnd(text, from);        // e^sin(x) is exp(sin(x)), not exp(sin) times (x)
     if(end === from) throw new Error("e^ needs an exponent");
-    out += !signed && text[k] === "(" ? ` exp${text.slice(k, end)} ` : ` exp(${text.slice(k, end)}) `;
+    out += !signed && text[k] === "(" ? ` exp${text.slice(k, end)} ` : ` exp(${signed ? "-" : ""}${text.slice(from, end)}) `;
     i = end;
   }
   // a bare e is the constant. The lookbehind refuses a digit, so that 1e3 stays scientific notation;
@@ -1020,13 +1029,16 @@ function freeNamesOf(text){                                // of the normalized 
 }
 
 // tolerate pasted maths notation, the plate's own included: the Greek that stands for a command (GREEK_SYMBOLS
-// in latex.js: θ π τ Γ Σ Π) and ∫ ∞ ∂ ∏ become their LaTeX commands, so that one reader owns them and \int_0^\pi
-// takes π as one limit; the variant glyphs fold to their letter first (GREEK_VARIANTS, beside that table; the
-// letters themselves pass as names); ² → ^{2}, ₀ → _{0}, · × → *, − → -, √ → sqrt, then the LaTeX subset and
-// silent products (latex.js), then a run of letters as a product, by the names `known` holds (above).
+// in latex.js: θ π τ Γ Σ Π) and ∫ ∞ ∂ ∏ √ (PASTED_COMMANDS) become their LaTeX commands, so that one reader owns
+// them: \int_0^\pi takes π as one limit, and √2x is \sqrt 2x, the root of the next atom; the variant glyphs fold to
+// their letter first (GREEK_VARIANTS, beside that table; the letters themselves pass as names); ² → ^{2}, ₀ → _{0},
+// · × → *, − → -, then the LaTeX subset and silent products (latex.js), then a run of letters as a product, by the
+// names `known` holds (above).
 // The ø family is an older spelling of θ, kept for the links that carry it.
 const VARIANT_RUN = new RegExp(`[${Object.keys(GREEK_VARIANTS).join("")}]`, "g");
 const SYMBOL_RUN = new RegExp(`[${Object.keys(GREEK_SYMBOLS).join("")}]`, "g");
+const PASTED_COMMANDS = {"∫":"int", "∞":"infty", "∂":"partial", "∏":"prod", "√":"sqrt"};
+const COMMAND_RUN = new RegExp(`[${Object.keys(PASTED_COMMANDS).join("")}]`, "g");
 const DIGITS = "0123456789-", SUPER = "⁰¹²³⁴⁵⁶⁷⁸⁹⁻", SUB = "₀₁₂₃₄₅₆₇₈₉₋";   // parallel: a digit and its scripts
 const respell = (from, to, s) => [...s].map(c => to[from.indexOf(c)] ?? c).join("");   // each character of `from` as its `to`
 const SUPER_RUN = new RegExp(`[${SUPER}]+`, "g"), SUB_RUN = new RegExp(`[${SUB}]+`, "g");
@@ -1036,12 +1048,11 @@ function normalize(src, known = RESERVED){
     .replace(/[º˚]/g, "°")                                        // the ordinal and the ring a keyboard types for the degree sign
     .replace(SYMBOL_RUN, c => `\\${GREEK_SYMBOLS[c]} `)
     .replace(/[øØ⌀∅]/g, "\\theta ")
-    .replace(/∫/g, "\\int ").replace(/∞/g, "\\infty ").replace(/∂/g, "\\partial ").replace(/∏/g, "\\prod ")
+    .replace(COMMAND_RUN, c => `\\${PASTED_COMMANDS[c]} `)
     .replace(SUPER_RUN, run => `^{${respell(SUPER, DIGITS, run)}}`).replace(SUB_RUN, run => `_{${respell(SUB, DIGITS, run)}}`)
     .replace(/[·•×∙]/g, "*")
     .replace(/[−–—]/g, "-")
     .replace(/÷/g, "/")
-    .replace(/√/g, "sqrt")
     .replace(/（/g, "(").replace(/）/g, ")")), known)))));
 }
 
