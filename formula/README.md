@@ -184,6 +184,7 @@ prettyName("x_1")                   // → "x₁"
 
 normalize("\\frac{1}{2}\\sin(kx)")   // → "(1/2)*sin(k*x)"
 normalize("√(x² + y²) · π")          // → "sqrt(x^(2) + y^(2)) * pi"
+normalize("[x + 1]² ≤ 4 ? 1 : 0")    // → "(x + 1)^(2) <= 4 ? 1 : 0"
 ```
 
 ## In React
@@ -386,7 +387,8 @@ laid over the face's.
 `\frac`, `\sqrt`, powers in braces, `\sin x` without brackets, `\cos^2 x`, `\sin^{-1}`, the Greek
 letters, subscripts (`x_0`, `\omega_0`), `90^\circ`, `\left( … \right)`, `\begin{cases}`,
 `\int_a^b … du`, `\sum_{k=1}^{n}`, `\prod`, `\frac{d}{dx}`, `x!`, and the silent products a textbook
-writes: `2x`, `2\pi x`, `\sin x \cos y`, `kx`. Pasted symbols work too: `π`, `θ`, `²`, `·`, `−`, `√`.
+writes: `2x`, `2\pi x`, `\sin x \cos y`, `kx`. Square brackets group as round ones do, and `\le`, `\ge` and `\neq`
+build a condition. Pasted symbols work too: `π`, `θ`, `²`, `·`, `−`, `√`, `≤`, `≥`, `≠`.
 The whole language is documented at [wavelace.com/documentation](https://www.wavelace.com/documentation).
 
 ## Beside the other libraries

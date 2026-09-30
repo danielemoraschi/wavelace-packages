@@ -1,4 +1,4 @@
-/*! @wavelace/formula 0.2.1 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/formula.js */
+/*! @wavelace/formula 0.2.2 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/formula.js */
 const window = {};
 /* Wavelace · latex — a LaTeX subset translated into the formula language
  * reads:   nothing
@@ -10,7 +10,7 @@ const window = {};
  * glyph, so \omega is ω from here on, a letter to every scanner below and a free name to formula.js;
  * LETTER is the one class that says what a letter is), a subscripted letter as a name of its own
  * (x_1, \omega_0, x_{max}: the identifier x_1, and free too), 90^\circ and a pasted 90° as deg(90),
- * \cdot, \left( … \right), e^{…}, and
+ * \cdot, \left( … \right), square brackets as round ones, e^{…}, and
  * \int_a^b … du, which becomes the formula language's integral(…, u, a, b). LaTeX's silent products (2x, 2\pi x,
  * \sin x \cos y) become explicit, and that rule runs for every formula, so cos(3x − t) works
  * whether or not a backslash is in sight. Anything left over that starts with a backslash is
@@ -132,6 +132,7 @@ const OPERAND_BEFORE = new RegExp(`[${TOKEN_CHARS}]+(?:${GLUE}+[${TOKEN_CHARS}]+
 const LIMIT = new RegExp(String.raw`^(?:\\[A-Za-z]+|\d+(?:\.\d+)?|[${LETTER}])`);   // a bare limit, as LaTeX reads it: \infty, a number, one letter
 
 /* ---------- scanning ---------- */
+const unbalanced = () => { throw new Error("unbalanced brackets in formula"); };   // every bracket scan's one refusal
 // the index just past the bracket group opening at text[i] ("(" or "{")
 function groupEnd(text, i){
   const open = text[i], close = open === "(" ? ")" : "}";
@@ -140,7 +141,7 @@ function groupEnd(text, i){
     if(text[k] === open) depth++;
     else if(text[k] === close && --depth === 0) return k + 1;
   }
-  throw new Error("unbalanced brackets in formula");
+  unbalanced();
 }
 // the index of the "(" matching the ")" at text[k]: groupEnd read backwards, for the one pass that
 // scans that way (a postfix operator has to find where the thing before it began)
@@ -150,7 +151,7 @@ function groupStart(text, k){
     if(text[i] === ")") depth++;
     else if(text[i] === "(" && --depth === 0) return i;
   }
-  throw new Error("unbalanced brackets in formula");
+  unbalanced();
 }
 // where the operand ending at text[k] begins: a bracket group, carrying the name of the call in
 // front of it when there is one, or the run of letters, digits and dots that stands on its own.
@@ -287,13 +288,16 @@ const OPENS_CASES = /\\begin\s*\{\s*cases\s*\}/;
 // what separates a row's cells: a lone &, not the && a condition may be built from, so that
 // x>0 && y>0 stays one cell rather than becoming three
 const CELL_SEP = /(?<!&)&(?!&)/;
+// a row break, and the extra space LaTeX may ask for after it, \\[2pt]: only a length, so that a row opening with a
+// bracket of its own stays one
+const ROW_BREAK = /\\\\(?:\s*\[\s*-?[\d.]+\s*(?:pt|em|ex|mm|cm|in|bp|pc|dd|cc|sp|mu)\s*\])?/;
 const TEXT_CMD = String.raw`text(?:rm|it|bf)?`;      // the prose commands, spelled once
 const OTHERWISE = new RegExp(String.raw`^\\${TEXT_CMD}\s*\{`);
 // one block's rows as a chain of ternaries, built last row first so that each becomes the else of
 // the one above it. A row with no condition, or a prose one, ends the chain; if none does, nothing
 // matching leaves a hole rather than a guess.
 function chainOf(rowText){
-  const rows = rowText.split(/\\\\/).map(r => r.trim()).filter(Boolean);
+  const rows = rowText.split(ROW_BREAK).map(r => r.trim()).filter(Boolean);
   if(!rows.length) throw new Error("\\begin{cases} needs a row: <value> & <condition>");
   let chain = "(0/0)";
   for(let i = rows.length - 1; i >= 0; i--){
@@ -311,6 +315,45 @@ function translateCases(text){
   // as a stray line break — advice to use the construct the reader is already using
   if(OPENS_CASES.test(out)) throw new Error("\\begin{cases} has no matching \\end{cases}");
   return out;
+}
+// square brackets group as round ones do, [x + 1]² as (x + 1)². The one that is not a group is the index of
+// \sqrt[n]{a}, which becomes \root{n}{a} here, where its closing bracket is found by matching rather than by the
+// first ] after it. The pairs are matched as they go: a ] that closes nothing, or closes a ( or {, and a [ left open
+// or closed by ) or }, are refused; a ( or { left open is groupEnd's to report
+function roundSquareBrackets(text){
+  const out = text.split(""), open = [];                 // UTF-16 units, as text.endsWith counts them
+  for(let i = 0; i < out.length; i++){
+    const c = out[i];
+    if("({[".includes(c)) open.push({c, i, root: c === "[" ? rootAt(text, i) : -1});
+    else if(")}]".includes(c)){
+      const top = open.pop();
+      if(!top){ if(c === "]") unbalanced(); continue; }
+      if((c === "]") !== (top.c === "[")) unbalanced();
+      if(c !== "]") continue;
+      if(top.root < 0){ out[top.i] = "("; out[i] = ")"; }
+      else rootIndexToArgument(out, top, i);
+    }
+  }
+  if(open.some(o => o.c === "[")) unbalanced();
+  return out.join("");
+}
+// \sqrt[n]{a} as \root{n}{a}, in place: the [ at open.i and the ] at close become braces, and the white space either
+// side of them plain spaces, since a line break or a tab is not one to the scanners after this pass
+function rootIndexToArgument(out, open, close){
+  let arg = close + 1;
+  while(/\s/.test(out[arg])) out[arg++] = " ";
+  if(out[arg] !== "{") throw new Error("\\sqrt[n] needs its argument in braces");
+  for(let k = open.root + 4; k < open.i; k++) out[k] = " ";
+  out[open.i] = "{"; out[close] = "}";
+  out.splice(open.root, 4, ..."root");                   // \sqrt and \root are both four letters, so no index moves
+}
+// where the letters of the \sqrt that the [ at text[i] is the index of begin, or −1 when it is an ordinary bracket.
+// Any white space may stand between them, a line break included, as LaTeX allows: this pass runs before any GLUE is
+// made, so skipSpacesBack's rule, a space or a GLUE, would miss a pasted newline and read the index as a bracket
+function rootAt(text, i){
+  let end = i;
+  while(end > 0 && /\s/.test(text[end - 1])) end--;
+  return text.endsWith("\\sqrt", end) ? end - 4 : -1;
 }
 function stripWrappers(text){
   // \\ before the control symbols below: those consume a backslash and one character, so a row
@@ -453,7 +496,6 @@ function rewrite(text, cmd, argc, fn){
 function translateCommands(text){
   text = rewrite(text, "[dt]?frac", 2, ([a, b]) => `(${wrap(a)}/${wrap(b)})`);
   text = rewrite(text, "[dt]?binom", 2, ([n, k]) => `combinations(${n}, ${k})`);
-  text = text.replace(/\\sqrt\s*\[([^\]]*)\]\s*(?=\{)/g, "\\root{$1}");
   text = rewrite(text, "root", 2, ([n, a]) => `((${a})^(1/(${n})))`);
   text = rewrite(text, "sqrt(?=\\s*\\{)", 1, ([a]) => `sqrt(${a})`);
   // \operatorname{arcsinh} is the same name \arcsinh is, so it goes through the same table; a name
@@ -658,6 +700,7 @@ function fromLatex(src){
   // asked for, so it arrives as the space it is indistinguishable from
   let text = translateCases(String(src).replaceAll(GLUE, " "));   // rows split before \\ can be read as a space
   text = stripWrappers(text);                          // \left and \right are gone from here
+  text = roundSquareBrackets(text);                    // [ ] are ( ) from here, and \sqrt[n]{a} is \root{n}{a}
   text = translateIntegrals(text);
   text = markDerivatives(text);                        // the d/dx heads, before \frac becomes a division
   text = translateCommands(text);                      // braces are brackets: ^{-1} is ^(-1) from here
@@ -1029,7 +1072,7 @@ function freeNamesOf(text){                                // of the normalized 
 }
 
 // tolerate pasted maths notation, the plate's own included: the Greek that stands for a command (GREEK_SYMBOLS
-// in latex.js: θ π τ Γ Σ Π) and ∫ ∞ ∂ ∏ √ (PASTED_COMMANDS) become their LaTeX commands, so that one reader owns
+// in latex.js: θ π τ Γ Σ Π) and ∫ ∞ ∂ ∏ √ ≥ ≤ ≠ (PASTED_COMMANDS) become their LaTeX commands, so that one reader owns
 // them: \int_0^\pi takes π as one limit, and √2x is \sqrt 2x, the root of the next atom; the variant glyphs fold to
 // their letter first (GREEK_VARIANTS, beside that table; the letters themselves pass as names); ² → ^{2}, ₀ → _{0},
 // · × → *, − → -, then the LaTeX subset and silent products (latex.js), then a run of letters as a product, by the
@@ -1037,7 +1080,7 @@ function freeNamesOf(text){                                // of the normalized 
 // The ø family is an older spelling of θ, kept for the links that carry it.
 const VARIANT_RUN = new RegExp(`[${Object.keys(GREEK_VARIANTS).join("")}]`, "g");
 const SYMBOL_RUN = new RegExp(`[${Object.keys(GREEK_SYMBOLS).join("")}]`, "g");
-const PASTED_COMMANDS = {"∫":"int", "∞":"infty", "∂":"partial", "∏":"prod", "√":"sqrt"};
+const PASTED_COMMANDS = {"∫":"int", "∞":"infty", "∂":"partial", "∏":"prod", "√":"sqrt", "≥":"ge", "≤":"le", "≠":"ne"};
 const COMMAND_RUN = new RegExp(`[${Object.keys(PASTED_COMMANDS).join("")}]`, "g");
 const DIGITS = "0123456789-", SUPER = "⁰¹²³⁴⁵⁶⁷⁸⁹⁻", SUB = "₀₁₂₃₄₅₆₇₈₉₋";   // parallel: a digit and its scripts
 const respell = (from, to, s) => [...s].map(c => to[from.indexOf(c)] ?? c).join("");   // each character of `from` as its `to`

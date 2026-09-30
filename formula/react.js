@@ -1,4 +1,4 @@
-/*! @wavelace/formula/react 0.2.1 | MIT | © 2026 Daniele Moraschi | generated from tools/pkg/formula/react.js */
+/*! @wavelace/formula/react 0.2.2 | MIT | © 2026 Daniele Moraschi | generated from tools/pkg/formula/react.js */
 /* @wavelace/formula/react: a formula in a React app, as Wavelace's own rail has one
  *
  * useFormula compiles, FormulaField is where a reader types, Plate shows a formula as it reads. The file is
