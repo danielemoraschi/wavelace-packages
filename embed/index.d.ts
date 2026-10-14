@@ -39,6 +39,8 @@ export interface EmbedOptions {
   trace?: boolean;
   particles?: boolean;
   fill?: boolean;
+  /** The plate as mathematics, |x| and 45° (default true); false prints it as the formula box takes it. */
+  maths?: boolean;
   /** The playback deck (default true). */
   deck?: boolean;
   /** The formula panel (default true). */

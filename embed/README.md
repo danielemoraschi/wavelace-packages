@@ -252,7 +252,7 @@ embedUrl({preset: "chirp-wave", site: "https://preview.example.com"})   // → "
 | `theme` | `light` or `dark`; left out, the reader's system decides. |
 | `view` | `iso`, `top`, `front`, `side` or `fit`. |
 | `zoom` | `click` (the default), `always`, or `false`. |
-| `play`, `spin`, `ground`, `trace`, `particles`, `fill` | The plot's own switches. |
+| `play`, `spin`, `ground`, `trace`, `particles`, `fill`, `maths` | The plot's own switches. |
 | `deck`, `showFormula`, `title` | What the frame shows around the plot. |
 | `orbit`, `pan` | What the reader's mouse may do. |
 | `site` | Where Wavelace is served. |
