@@ -171,7 +171,8 @@ free names.
 
 ## Show the formula back
 
-`pretty` prints a formula as it should read on screen; `normalize` shows the expression `compile`
+`pretty` prints a formula as it should read on screen, as mathematics by default; with `"plain"` it spells
+every call as `compile` takes it, so what it prints pastes back. `normalize` shows the expression `compile`
 actually runs, which helps when a pasted formula does something unexpected.
 
 ```js
@@ -179,6 +180,8 @@ import {pretty, prettyName, normalize} from "@wavelace/formula";
 
 pretty("\\int_0^x \\cos(u^2) du")   // → "∫₀^x cos(u²) du"
 pretty("3x^2 + 2\\theta")           // → "3x² + 2θ"
+pretty("\\left|x\\right| + \\sqrt{2x}")            // → "|x| + √(2x)"
+pretty("\\left|x\\right| + \\sqrt{2x}", "plain")   // → "abs(x) + sqrt(2x)"
 prettyName("th")                    // → "θ"
 prettyName("x_1")                   // → "x₁"
 

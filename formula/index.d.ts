@@ -24,8 +24,10 @@ export function fromLatex(src: string): string;
 /** fromLatex, with pasted symbols (π, θ, ², ·, −) read first and a run of letters like kx read as a
  *  product. What compile reads. Throws with a readable message. */
 export function normalize(src: string): string;
-/** The formula as it reads on a plate: 3x, θ, π, · for products, superscript powers, ∫ with limits. */
-export function pretty(src: string): string;
+/** The formula as it reads on a plate: 3x, θ, π, · for products, superscript powers, ∫ with limits, and a bracket
+ *  only where the reading needs one. "maths", the default, sets a call as a textbook does: |x|, 45°, √x, n!, sin t.
+ *  "plain" spells every call as compile takes it, so what it prints pastes back. */
+export function pretty(src: string, notation?: "maths" | "plain"): string;
 /** One name as the plate prints it: th as θ, x_1 as x₁. */
 export function prettyName(name: string): string;
 /** Compile once, bind many times. Throws with a readable message. */

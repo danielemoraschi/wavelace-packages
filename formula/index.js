@@ -1,4 +1,4 @@
-/*! @wavelace/formula 0.2.2 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/formula.js */
+/*! @wavelace/formula 0.3.0 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/functions.js and js/formula-tree.js and js/formula.js and js/plate.js */
 const window = {};
 /* Wavelace · latex — a LaTeX subset translated into the formula language
  * reads:   nothing
@@ -97,7 +97,7 @@ const callShape = head => `${head}(${BINDERS[head].parts.join(", ")})`;
 // and \sum of a \sum takes the inner call whole. Not FUNCTIONS ∪ BINDERS: FUNCTIONS is the set
 // that may be applied to a bare atom, and mod is deliberately absent from it (mod x means
 // nothing) while mod(x, 2) is a call like any other. The invariant: every function-valued key of
-// ENV in formula.js belongs here.
+// ENV in functions.js belongs here.
 const CALLABLE = new Set([...FUNCTIONS, ...BINDER_NAMES, "mod"]);
 const BARE_FUNCTIONS = new Set(FUNCTIONS);              // the ones applyFunctions lets take a bare atom
 // sin^{-1} is asin, not 1/sin — only the names INVERSE lists; anything else carrying a ^{-1} is
@@ -120,7 +120,9 @@ const TOKEN = new RegExp(`^[${TOKEN_CHARS}]+`), NAME = new RegExp(`^[${LETTER}][
 // pi, tau, inf, read off COMMANDS so one added there multiplies without a second edit) and any
 // SUBSCRIPTED_LETTER, a plot variable, a constant or a free name (formula.js), an atom as a
 // binder's dummy already was
-const NAMED_ATOMS = [...new Set(Object.values(COMMANDS))].filter(n => n.length > 1 && NAME.test(n) && !CALLABLE.has(n));
+// a command that becomes a name rather than a function or an operator: \pi, \infty, \omega
+const isNamedConstant = name => NAME.test(name) && !CALLABLE.has(name);
+const NAMED_ATOMS = [...new Set(Object.values(COMMANDS))].filter(n => n.length > 1 && isNamedConstant(n));
 const ATOMS = [...NAMED_ATOMS, SUBSCRIPTED_LETTER].join("|");
 const EXPONENT = new RegExp(`^-?[${TOKEN_CHARS}]+`);                // a token, and an exponent may be negative
 // the end-anchored forms of the two above, for the one pass that scans backwards: what may sit
@@ -189,12 +191,16 @@ function operandEnd(text, i){
 }
 // a power written ^(…) or ^token at text[i]; returns its end, or i when there is none. The exponent
 // may lead with a minus, which TOKEN does not: x^-2 is the spelling half of LaTeX writes, and
-// without it ^{-1} would be read as an inverse while ^-1 quietly became a product.
+// without it ^{-1} would be read as an inverse while ^-1 quietly became a product. A known function
+// with its bracket is one exponent, as an earlier pass may have written one there: x^k! is
+// x^factorial(k) by the time a series measures its summand, and its (k) is not a product.
 function powerEnd(text, i){
   if(text[i] !== "^") return i;
   if(text[i + 1] === "(") return groupEnd(text, i + 1);
   const m = EXPONENT.exec(text.slice(i + 1));
-  return m ? i + 1 + m[0].length : i;
+  if(!m) return i;
+  const end = i + 1 + m[0].length, name = m[0].replace(/^-/, "");
+  return CALLABLE.has(name) && text[end] === "(" ? groupEnd(text, end) : end;
 }
 // an atom, what a bare function or e^ applies to: a bracket group, or a run of letters and digits
 // carrying its own powers (2x, x^2, th), continued over every GLUE, which stands where the author
@@ -513,6 +519,7 @@ function translateCommands(text){
   // 90^\circ is the degree sign, folded before ^{ becomes ^( and \circ is refused by name; the infix
   // f \circ g, composition, is left to that refusal
   text = text.replace(/\^\s*\{?\s*\\circ\s*\}?/g, "°");
+  text = braceScriptCommands(text);
   for(let i = text.indexOf("^{"); i >= 0; i = text.indexOf("^{")){
     const end = groupEnd(text, i + 1);
     text = `${text.slice(0, i)}^(${text.slice(i + 2, end - 1)})${text.slice(end)}`;
@@ -525,9 +532,16 @@ function translateCommands(text){
   // 2\cos x is 2 · cos x and 2cos was never an atom anyone could mean.
   return text.replace(/\\([A-Za-z]+) ?/g, (all, cmd) => {
     const name = commandOf(cmd);
-    return NAME.test(name) && !CALLABLE.has(name) ? `${GLUE}${name}${GLUE}` : ` ${name} `;
+    return isNamedConstant(name) ? `${GLUE}${name}${GLUE}` : ` ${name} `;
   });
 }
+// a command written straight after ^ is the whole exponent, as LaTeX reads a script without braces: ^\pi is ^{\pi}, so
+// e^\pi x is e^π times x and a series' upper limit \pi is π, not the p of pi (#62). Only a command that becomes a name
+// of more than one letter needs it (pi, inf, th, tau; a Greek letter is one glyph, read whole already): one that takes
+// arguments keeps them, and one the table does not know is left to be refused by name
+const SCRIPT_COMMAND = /\^\s*\\([A-Za-z]+)/g;
+const spellsALongName = cmd => Object.hasOwn(COMMANDS, cmd) && NAMED_ATOMS.includes(COMMANDS[cmd]);
+const braceScriptCommands = text => text.replace(SCRIPT_COMMAND, (all, cmd) => spellsALongName(cmd) ? `^{\\${cmd}}` : all);
 // x_1, x_{12}, x_i, \omega_0 become the identifier x_1, x_12, ω_0, a SUBSCRIPTED_LETTER. The base is
 // bounded so that sum_(k=1) and diff_( are left to their own passes. What follows a subscript is set
 // apart, so x_ab is x_a times b and x_{a}b is too, not the name x_{ab}. What this does not read keeps
@@ -708,10 +722,13 @@ function fromLatex(src){
   text = translateDegrees(text);                       // 30° is deg(30) from here, a call a bare function takes whole
   text = translateEuler(text);
   text = applyFunctions(text);                         // a call is written name(args) from here
+  // ! binds to the operand before it (operandStart: an atom, a bracket or a call), tighter than anything a term is made
+  // of, so like ° it is a call before a derivative or a series measures its term: Σ x^k/k! keeps the factorial in its
+  // summand (#65). It needs the calls above, for sin(x)!, and must precede the products
+  text = translateFactorials(text);
   text = translateDerivatives(text);                   // its term needs those calls, and precedes the series
   text = translateSeries(text);                        // takes its summand with the same operandEnd
   text = refuseLeftovers(text);                        // the heads and subscripts nothing above took
-  text = translateFactorials(text);                    // needs those calls, and must precede the products
   text = text.replaceAll(GLUE, " ");                   // every join is made: a space again from here
   text = implicitProducts(text);
   // the spaces a call was padded with: by now every name before a ( is a function's, the products having their *
@@ -722,23 +739,21 @@ Object.assign(WL, {fromLatex, eachBinder, dummiesOf, NAME, LETTER, WORD, NOT_IN_
                    GREEK, GREEK_SYMBOLS, GREEK_VARIANTS, foldVariant, COMMANDS, FUNCTIONS, BINDERS, INVERSE, CALLABLE, callShape});
 })();
 
-/* Wavelace · formula — compile a real-valued expression, and print it for the plate
- * reads:   fromLatex, eachBinder, dummiesOf, NAME, LETTER, WORD, NOT_IN_NAME, NAME_END, LETTER_OR_TH, SUBSCRIPTED_LETTER, NOT_AFTER_LETTER,
- *          GREEK_SYMBOLS, GREEK_VARIANTS, foldVariant, COMMANDS
- * exports: VARS, ENV, GLOSS, normalize, readsVars, isFreeName, FREE_DEFAULT, bindable, compile, pretty, prettyTriple, prettyName, dropLhs, namesOf,
- *          evalParam, evalPlane, evalLine
+/* Wavelace · functions — the functions the formula language has, and what each one means
+ * reads:   nothing
+ * exports: ENV, GLOSS
  *
- * Every formula is compiled against the whole variable set (VARS); each renderer feeds what it
- * has, so any formula can be drawn by any renderer. integral, sum, prod and diff are the functions
- * whose first argument is an expression: compile binds it to a function of its variable before the
- * body is built, so the variable named second is a dummy that shadows any plot variable of the same
- * name. The first three are then given a range; diff is given the name again, which outside the
- * binder is whatever the enclosing scope holds, so it differentiates where the plot already is. */
+ * ENV is every name a formula may call or read as a constant, each bound to the JavaScript that
+ * computes it; compile (formula.js) hands its values to the body it builds, so a formula calls
+ * these and nothing else. Most are Math's own. The rest are written here: the four binders'
+ * numerics (Simpson for the integral, a bounded series for sum and prod, a central difference for
+ * diff), and the special functions, each to a stated accuracy rather than a hopeful round number.
+ * GLOSS says what a name means where the name does not say it, for the documentation page and the
+ * app's reference drawer. Nothing here reads the formula's text: it loads anywhere, in any order
+ * before formula.js. */
 (() => {
 "use strict";
 const WL = window.Wavelace = window.Wavelace || {};
-const {fromLatex, eachBinder, dummiesOf, NAME, LETTER, WORD, NOT_IN_NAME, NAME_END, LETTER_OR_TH, SUBSCRIPTED_LETTER, NOT_AFTER_LETTER,
-       GREEK_SYMBOLS, GREEK_VARIANTS, foldVariant, COMMANDS} = WL;
 
 // a numeric integral of f over [a, b]: composite Simpson on PANELS panels, which also says whether the integrand
 // had died away by the end, the |f| of the last quarter of the samples at most TAIL of the whole; one sample
@@ -836,7 +851,13 @@ function combinations(n, k){
   if(!Number.isInteger(n) || !Number.isInteger(k) || k < 0 || n < 0 || k > n) return NaN;
   k = Math.min(k, n - k);
   let r = 1;
-  for(let i = 1; i <= k; i++) r = r * (n - k + i) / i;
+  // r is combinations(n - k + i, i) after step i, so it only grows: once past the largest double the answer is too, and
+  // stopping there bounds the loop near 510 steps however large k is (combinations(2e9, 1e9) froze the page). Dividing
+  // before multiplying, where multiplying first would overflow, is what keeps Infinity meaning that
+  for(let i = 1; i <= k && r !== Infinity; i++){
+    const product = r * (n - k + i);
+    r = product === Infinity ? r / i * (n - k + i) : product / i;
+  }
   return Math.round(r);
 }
 // Abramowitz & Stegun 7.1.26: absolute error under 1.5e-7, three orders past a pixel
@@ -911,8 +932,6 @@ const ENV = {
   deg:x => x * Math.PI / 180,                // what 30° and 30^\circ become (latex.js)
   PI:Math.PI, pi:Math.PI, E:Math.E, tau:Math.PI*2, inf:Infinity, integral, sum, prod, diff,
 };
-const ENV_KEYS = Object.keys(ENV);
-const ENV_VALS = ENV_KEYS.map(k => ENV[k]);
 // what a function does, where its name does not say it: the documentation page's gloss beside each
 // name, and the app's own reference drawer's. null means the name says it, a decision written down,
 // so that a name nobody has thought about is the thing that fails the build (tools/docs.js gates
@@ -941,6 +960,179 @@ const GLOSS = {
   integral: null, sum: null, prod: null, diff: null,          // the binders have a section of their own
   pi: null, PI: null, E: null, tau: null, inf: null,          // as do the constants
 };
+
+Object.assign(WL, {ENV, GLOSS});
+})();
+
+/* Wavelace · formula-tree — a formula read into a tree, by one precedence reader, and written back as JavaScript
+ * reads:   LETTER, WORD, BINDERS (latex.js)
+ * exports: treeOfFormula, treeOfPlate, javascriptOf, asArrowCall, BINARY_LEVELS, INCOMPLETE
+ *
+ * One reading of a formula serves everything that runs or prints it. compile writes the JavaScript it hands to new
+ * Function from the tree (javascriptOf), the Worker, which may not, walks the same tree (formula-eval.mjs), and the
+ * plate prints from it, which is how it knows which brackets it may leave out. The power is ^ (or **, which normalize
+ * leaves as typed), right-associative, and a sign is looser than it, as maths reads -x^2. Two readings differ in one
+ * rule, what two operands side by side are:
+ *   treeOfFormula, what compile reads: a syntax error, normalize having written every product the language has;
+ *   treeOfPlate: a product, as the complex renderer's parser reads 2i, 3(z+1) and s z. The plate prints text a
+ *     compiler has already accepted, the real one's or the complex one's, so it reads leniently.
+ * A node is {op} with its parts: number {value, text}, name {name}, prefix {sign, arg}, call {name, args},
+ * ? {test, then, otherwise}, and a binary operator {left, right}, with implicit set on a product nobody wrote a sign
+ * for; and arrow {param, body}, which asArrowCall makes of a binder and no formula spells. A number keeps the digits
+ * it was written with, so the plate prints them as written. */
+(() => {
+"use strict";
+const WL = window.Wavelace = window.Wavelace || {};
+const {LETTER, WORD, BINDERS} = WL;
+
+// what every reader of a formula says when it cannot read one: the words a syntax error has, whichever reader met it
+const INCOMPLETE = "this is not a complete formula: something is missing, or in the wrong place";
+
+// the binary operators below the power, loosest first, each level left-associative as in JavaScript
+const BINARY_LEVELS = [["||"], ["&&"], ["==", "!=", "===", "!=="], ["<", ">", "<=", ">="], ["+", "-"], ["*", "/", "%"]];
+const PRODUCT_LEVEL = BINARY_LEVELS.length - 1;
+const SIGNS = ["-", "+", "!"];
+
+// two operands side by side: separate, a syntax error, in what compile reads; multiplied in the plate's reading
+const separate = () => false;
+const multiplied = read => read.peek()?.kind === "name" || read.is("(");
+const treeOfFormula = text => treeOf(text, separate);
+const treeOfPlate = text => treeOf(text, multiplied);
+
+function treeOf(text, sideBySide){
+  const read = readerOf(tokensOf(text), sideBySide);
+  const tree = sequence(read);
+  if(!read.done()) throw new Error(INCOMPLETE);
+  return tree;
+}
+
+/* ---------- the tokens, and a reader over them ---------- */
+
+const TOKEN = new RegExp(String.raw`\s*(?:(\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)|([${LETTER}_][${WORD}]*)|(\*\*|===|!==|==|!=|<=|>=|&&|\|\||[-+*/%^<>!?:(),]))`, "y");
+function tokensOf(text){
+  const tokens = [];
+  TOKEN.lastIndex = 0;
+  while(TOKEN.lastIndex < text.length){
+    const at = TOKEN.lastIndex, m = TOKEN.exec(text);
+    if(!m){ if(/^\s*$/.test(text.slice(at))) break; throw new Error(INCOMPLETE); }
+    tokens.push(m[1] !== undefined ? {kind: "number", value: Number(m[1]), text: m[1]}
+      : m[2] !== undefined ? {kind: "name", value: m[2]} : {kind: "op", value: m[3]});
+  }
+  return tokens;
+}
+// what is next, take it, take it only if it is this, and insist on it; and whether the next token multiplies the last
+function readerOf(tokens, sideBySide){
+  let i = 0;
+  const peek = (k = 0) => tokens[i + k];
+  const is = (value, k = 0) => peek(k)?.kind === "op" && peek(k).value === value;
+  const take = () => { if(i >= tokens.length) throw new Error(INCOMPLETE); return tokens[i++]; };
+  const accept = value => is(value) && take();
+  const expect = value => { if(!accept(value)) throw new Error(INCOMPLETE); };
+  const read = {peek, is, take, accept, expect, done: () => i >= tokens.length};
+  read.multipliesNext = () => sideBySide(read);
+  return read;
+}
+
+/* ---------- the levels, loosest first ---------- */
+
+// a, b: the comma, JavaScript's loosest operator, which a bracketed list of anything but a call's arguments is
+function sequence(read){
+  let node = conditional(read);
+  while(read.accept(",")) node = {op: ",", left: node, right: conditional(read)};
+  return node;
+}
+function conditional(read){
+  const test = binary(read, 0);
+  if(!read.accept("?")) return test;
+  const then = conditional(read);
+  read.expect(":");
+  return {op: "?", test, then, otherwise: conditional(read)};
+}
+function binary(read, level){
+  if(level === BINARY_LEVELS.length) return factor(read);
+  let left = binary(read, level + 1);
+  for(;;){
+    if(BINARY_LEVELS[level].some(op => read.is(op))) left = {op: read.take().value, left, right: binary(read, level + 1)};
+    else if(level === PRODUCT_LEVEL && read.multipliesNext()) left = {op: "*", implicit: true, left, right: binary(read, level + 1)};
+    else return left;
+  }
+}
+function primary(read){
+  const token = read.take();
+  if(token.kind === "number") return {op: "number", value: token.value, text: token.text};
+  if(token.kind === "name") return read.accept("(") ? {op: "call", name: token.value, args: argumentsOf(read)} : {op: "name", name: token.value};
+  if(token.value !== "(") throw new Error(INCOMPLETE);
+  const inner = sequence(read);
+  read.expect(")");
+  return inner;
+}
+function argumentsOf(read){
+  const args = [];
+  if(read.accept(")")) return args;
+  do args.push(conditional(read)); while(read.accept(","));
+  read.expect(")");
+  return args;
+}
+// below the products, as maths reads it: a sign takes the whole power after it, and the power's exponent may carry a
+// sign of its own
+function factor(read){
+  const sign = SIGNS.find(s => read.accept(s));
+  return sign ? {op: "prefix", sign, arg: factor(read)} : raised(read);
+}
+function raised(read){
+  const base = primary(read);
+  return read.accept("^") || read.accept("**") ? {op: "^", left: base, right: factor(read)} : base;
+}
+
+/* ---------- a tree written back as the JavaScript compile runs ---------- */
+
+// every node in its own brackets, so JavaScript's precedence never has a say and the tree's, the formula's, is the one
+// that runs. A binder's expression becomes the arrow its function is called with; diff is handed its variable again,
+// which outside the arrow is whatever the enclosing scope holds
+const javascriptOf = node => (Object.hasOwn(JS_WRITERS, node.op) ? JS_WRITERS[node.op] : binaryJavascript)(node);
+const JS_WRITERS = {
+  number: node => String(node.value),             // the value read, not the digits: JavaScript's parser decides nothing
+  name: node => node.name,
+  prefix: node => `(${node.sign}${javascriptOf(node.arg)})`,
+  "^": node => `(${javascriptOf(node.left)}**${javascriptOf(node.right)})`,
+  "?": node => `(${javascriptOf(node.test)}?${javascriptOf(node.then)}:${javascriptOf(node.otherwise)})`,
+  call: node => callJavascript(asArrowCall(node)),
+  arrow: node => `((${node.param}) => ${javascriptOf(node.body)})`,
+};
+const binaryJavascript = node => `(${javascriptOf(node.left)}${node.op}${javascriptOf(node.right)})`;
+const callJavascript = ({name, args}) => `${name}(${args.map(javascriptOf).join(", ")})`;
+// a binder's call as its function is called: the expression an arrow of its variable, the range after it, and diff
+// handed the variable again. Any other call as it is. compile writes it, and the Worker's evaluator walks it
+function asArrowCall(node){
+  if(!Object.hasOwn(BINDERS, node.name)) return node;
+  const [body, variable, ...range] = node.args, arrow = {op: "arrow", param: variable.name, body};
+  return {...node, args: node.name === "diff" ? [arrow, variable] : [arrow, ...range]};
+}
+
+Object.assign(WL, {treeOfFormula, treeOfPlate, javascriptOf, asArrowCall, BINARY_LEVELS, INCOMPLETE});
+})();
+
+/* Wavelace · formula — compile a real-valued expression
+ * reads:   fromLatex, eachBinder, dummiesOf, NAME, LETTER, WORD, NOT_IN_NAME, NAME_END, LETTER_OR_TH, SUBSCRIPTED_LETTER, NOT_AFTER_LETTER,
+ *          GREEK_SYMBOLS, GREEK_VARIANTS, foldVariant, COMMANDS, ENV (functions.js), treeOfFormula, javascriptOf
+ *          (formula-tree.js)
+ * exports: VARS, normalize, readsVars, isFreeName, FREE_DEFAULT, bindable, bindableWith, checkNames, compile, dropLhs, namesOf,
+ *          SUPERSCRIPTS, SUBSCRIPTS, respell, PROBE, evalParam, evalPlane, evalLine, evalField, evalForce, FEEDS
+ *
+ * Every formula is compiled against the whole variable set (VARS); each renderer feeds what it
+ * has, so any formula can be drawn by any renderer. integral, sum, prod and diff are the functions
+ * whose first argument is an expression: compile writes it as an arrow of its variable (asArrowCall,
+ * formula-tree.js), so the variable named second is a dummy that shadows any plot variable of the same
+ * name. The first three are then given a range; diff is given the name again, which outside the
+ * binder is whatever the enclosing scope holds, so it differentiates where the plot already is. */
+(() => {
+"use strict";
+const WL = window.Wavelace = window.Wavelace || {};
+const {fromLatex, eachBinder, dummiesOf, NAME, LETTER, WORD, NOT_IN_NAME, NAME_END, LETTER_OR_TH, SUBSCRIPTED_LETTER, NOT_AFTER_LETTER,
+       GREEK_SYMBOLS, GREEK_VARIANTS, foldVariant, COMMANDS, ENV, treeOfFormula, javascriptOf} = WL;
+
+const ENV_KEYS = Object.keys(ENV);
+const ENV_VALS = ENV_KEYS.map(k => ENV[k]);
 /* The left-hand side the formula field is already showing, typed back into it. MODES gives each
  * renderer its own — "z =" for surface, "V(x) =" for quantum, "f(r) =" for swarm — and session.js
  * hands it here because it is the only layer that knows which renderer is on show. Whitespace is
@@ -1030,7 +1222,7 @@ function readsVars(src){
 // not free, so sum(a*k, k, 1, 3) frees a alone.
 // The order is first appearance, which is the order the rail shows them in.
 const RESERVED = new Set([...VARS, "e", ...ENV_KEYS]);
-const IDENT = new RegExp(`${NOT_IN_NAME}[${LETTER}_][${WORD}]*`, "g");
+const IDENTIFIERS = new RegExp(`${NOT_IN_NAME}[${LETTER}_][${WORD}]*`, "g");
 // a SUBSCRIPTED_LETTER (latex.js) and nothing longer: x_0 and t_0 are names of their own, a fixed
 // point and not the axis, which is what a textbook means by them; the whole name is what RESERVED is asked
 const FREE_SHAPE = new RegExp(`^${SUBSCRIPTED_LETTER}$`);
@@ -1064,11 +1256,9 @@ function readRunsAsProducts(text, known){
 // the names of several compiled parts as one list, each once, in order of first appearance: what
 // the session binds for a triple, and what a spec's lines name between them
 const namesOf = parts => [...new Set(parts.flatMap(p => p.names))];
-function freeNamesOf(text){                                // of the normalized source
-  const letters = [...new Set((text.match(IDENT) || []).filter(isFreeName))];
-  if(!letters.length) return letters;                      // the common case, and the binder scan is not free
-  const dummies = new Set(dummiesOf(text));
-  return letters.filter(n => !dummies.has(n));
+function freeNamesOf(text, dummies){                       // of the normalized source, whose binders bind dummies
+  const letters = [...new Set((text.match(IDENTIFIERS) || []).filter(isFreeName))];
+  return letters.filter(n => !dummies.includes(n));
 }
 
 // tolerate pasted maths notation, the plate's own included: the Greek that stands for a command (GREEK_SYMBOLS
@@ -1082,9 +1272,9 @@ const VARIANT_RUN = new RegExp(`[${Object.keys(GREEK_VARIANTS).join("")}]`, "g")
 const SYMBOL_RUN = new RegExp(`[${Object.keys(GREEK_SYMBOLS).join("")}]`, "g");
 const PASTED_COMMANDS = {"∫":"int", "∞":"infty", "∂":"partial", "∏":"prod", "√":"sqrt", "≥":"ge", "≤":"le", "≠":"ne"};
 const COMMAND_RUN = new RegExp(`[${Object.keys(PASTED_COMMANDS).join("")}]`, "g");
-const DIGITS = "0123456789-", SUPER = "⁰¹²³⁴⁵⁶⁷⁸⁹⁻", SUB = "₀₁₂₃₄₅₆₇₈₉₋";   // parallel: a digit and its scripts
+const DIGITS = "0123456789-", SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹⁻", SUBSCRIPTS = "₀₁₂₃₄₅₆₇₈₉₋";   // parallel: a digit and its scripts
 const respell = (from, to, s) => [...s].map(c => to[from.indexOf(c)] ?? c).join("");   // each character of `from` as its `to`
-const SUPER_RUN = new RegExp(`[${SUPER}]+`, "g"), SUB_RUN = new RegExp(`[${SUB}]+`, "g");
+const SUPER_RUN = new RegExp(`[${SUPERSCRIPTS}]+`, "g"), SUB_RUN = new RegExp(`[${SUBSCRIPTS}]+`, "g");
 function normalize(src, known = RESERVED){
   return refuseLooseComma(refuseEmptyCall(refuseAssignment(refuseBitwise(readRunsAsProducts(fromLatex(src
     .replace(VARIANT_RUN, foldVariant)
@@ -1092,52 +1282,47 @@ function normalize(src, known = RESERVED){
     .replace(SYMBOL_RUN, c => `\\${GREEK_SYMBOLS[c]} `)
     .replace(/[øØ⌀∅]/g, "\\theta ")
     .replace(COMMAND_RUN, c => `\\${PASTED_COMMANDS[c]} `)
-    .replace(SUPER_RUN, run => `^{${respell(SUPER, DIGITS, run)}}`).replace(SUB_RUN, run => `_{${respell(SUB, DIGITS, run)}}`)
+    .replace(SUPER_RUN, run => `^{${respell(SUPERSCRIPTS, DIGITS, run)}}`).replace(SUB_RUN, run => `_{${respell(SUBSCRIPTS, DIGITS, run)}}`)
     .replace(/[·•×∙]/g, "*")
     .replace(/[−–—]/g, "-")
     .replace(/÷/g, "/")
     .replace(/（/g, "(").replace(/）/g, ")")), known)))));
 }
 
-// the expression becomes a function of its variable, a name of the formula's own (a plot variable may be
-// shadowed: inside the binder it is the dummy)
-const bindBinders = body => eachBinder(body, (head, expr, name, from, to) => {
-  if(!NAME.test(name) || name in ENV) throw new Error(`${head}'s variable must be a name, like k`);
-  // the three with a range are handed it; diff is handed the name itself, which outside the arrow
-  // is whatever the enclosing scope holds — the plot's variable, or a binder's dummy further out
-  return head === "diff" ? `diff((${name}) => (${expr}), ${name})`
-                         : `${head}((${name}) => (${expr}), ${from}, ${to})`;
-});
-
-// the sample evaluation, which is where an unknown name first shows. Its own message is
-// JavaScript's and session.js puts that on the plate verbatim, so the name is said plainly here
-// instead — the name, not the sentence around it, since V8 writes "x is not defined" where
-// JavaScriptCore writes "Can't find variable: x". A name on a branch the probe does not take still
-// escapes at draw time: nothing short of reading the body would catch that, and the body is not
-// ours to read.
-const UNKNOWN_NAME = new RegExp(`([${WORD}$]+)(?: is not defined)?$`);   // the whole run, ωsin as much as sni
-/* JavaScript's parser is the one that reads the body, and its words are its own: "2 +" comes back
- * as an unexpected ")", the bracket this wrapper added, and the wording differs between engines the
- * way probeValue describes below for a name. The reader typed a formula, so what comes back says
- * that. Every sentence this file writes itself is thrown before here. */
-function bodyFunction(body, names = []){
-  try { return new Function(...ENV_KEYS, ...names, `"use strict";return (${VARS}) => (${body});`); }
-  catch(e){
-    if(!(e instanceof SyntaxError)) throw e;
-    throw new Error("this is not a complete formula: something is missing, or in the wrong place");
-  }
+// a binder's parts and its variable, refused before anything reads the body: eachBinder refuses the wrong number of
+// parts, and this a variable that is no name of the formula's own: a function's, which the arrow it becomes
+// (javascriptOf, formula-tree.js) would shadow, one every object answers to, constructor or toString, which outside
+// the binder the body would find on the global, or a word JavaScript keeps, which no arrow may take as its parameter
+// while the Worker's evaluator, reading no JavaScript, would bind it. A plot variable may be shadowed: inside the binder
+// it is the dummy
+const JAVASCRIPT_WORDS = new Set(("arguments await break case catch class const continue debugger default delete do else enum eval "
+  + "export extends false finally for function if implements import in instanceof interface let new null package private "
+  + "protected public return static super switch this throw true try typeof var void while with yield").split(" "));
+const ownedElsewhere = name => Object.hasOwn(ENV, name) || name in Object.prototype || JAVASCRIPT_WORDS.has(name);
+function checkBinders(text){
+  eachBinder(text, (head, expr, name) => {
+    if(!NAME.test(name) || ownedElsewhere(name)) throw new Error(`${head}'s variable must be a name, like k`);
+    return "";
+  });
 }
+
+// the sample evaluation. checkNames has refused every unknown name by then, so a ReferenceError here would be one of
+// ours; its message is JavaScript's, and session.js puts that on the plate verbatim, so the name is said plainly
+// instead: the name, not the sentence around it, since V8 writes "x is not defined" where JavaScriptCore writes
+// "Can't find variable: x"
+const UNKNOWN_NAME = new RegExp(`([${WORD}$]+)(?: is not defined)?$`);   // the whole run, ωsin as much as sni
+const NOT_A_NUMBER = "formula must return a number";
+const unknownName = name => `${name} is not a function or a variable here`;
+// the tree as JavaScript, every name in it checked already: a variable, a function, a free letter or a dummy, none of
+// them a word JavaScript keeps, so the text it is built from always parses
+const bodyFunction = (body, names) => new Function(...ENV_KEYS, ...names, `"use strict";return (${VARS}) => (${body});`);
 function probeValue(fn){
   try{ return fn(...PROBE); }
   catch(e){
     if(!(e instanceof ReferenceError)) throw e;
-    throw new Error(`${UNKNOWN_NAME.exec(e.message)?.[1] ?? "that name"} is not a function or a variable here`);
+    throw new Error(unknownName(UNKNOWN_NAME.exec(e.message)?.[1] ?? "that name"));
   }
 }
-// a leading minus becomes "-1*" so that -x^2 means -(x^2): JavaScript refuses a unary minus
-// directly before **, and the maths convention is the negation of the power. A minus right
-// after ^ (2^-3) is left alone, since ^ is not in the operator class
-const UNARY_MINUS = new RegExp(`(^|[(,+\\-*/%<>=?:&|!])(\\s*)-(?=\\s*[${WORD}(.])`, "g");
 // The compiled formula with its free names still open: `names`, in order of first appearance, and
 // bind(values), the (x, y, z, r, th, u, v, t) => number with each name bound to values[name] or
 // FREE_DEFAULT. The pipeline runs once, here. ENV and the free names are bound by calling the
@@ -1145,16 +1330,41 @@ const UNARY_MINUS = new RegExp(`(^|[(,+\\-*/%<>=?:&|!])(\\s*)-(?=\\s*[${WORD}(.]
 // eight arguments and nothing else (spreading ENV into every call, every value of it at 129² calls
 // a frame, was two thirds of the old cost), and a dial drag is one call of the outer function
 // again: microseconds, and never a second normalize. Throws with a readable message.
-function bindable(src){
+const bindable = bindableWith((tree, names) => {
+  const outer = bodyFunction(javascriptOf(tree), names);
+  return values => outer(...ENV_VALS, ...values);
+});
+// the pipeline and its refusals, in their order, around a reader of the formula's tree: read(tree, names) answers a
+// binder that takes the free names' values in order (and whatever else its caller passes on) and returns the plot's
+// function. The app writes the tree as JavaScript for new Function; the Worker, which may not, walks it
+// (formula-eval.mjs). Every refusal comes before either reader, so the two refuse the same formulas in the same words
+function bindableWith(read){
+  return (src, ...extra) => {
+    const {text, tree, names} = readFormula(src), bindValues = read(tree, names);
+    const bind = (values = {}, ...more) => bindValues(names.map(n => values[n] ?? FREE_DEFAULT), ...more);
+    // the type check, once: it does not depend on what the names are bound to
+    if(typeof probeValue(bind({}, ...extra)) !== "number") throw new Error(NOT_A_NUMBER);
+    return {names, bind, text};                              // text: the normalized source, for a caller that would otherwise normalize again
+  };
+}
+// everything bindable does before a reader makes the formula a function: the normalized text, its tree and the free
+// names, in order. The app writes the tree as JavaScript (javascriptOf) and the Worker walks it, so both run with the
+// formula's precedence: -x^2 is −(x²) and a/-b divides by −b. The refusals come in the order they always have: a
+// binder's parts, a character, an empty formula, what cannot be read, then a name nothing gives a value
+function readFormula(src){
   const text = normalize(src);
-  const body = bindBinders(text).replace(UNARY_MINUS, "$1$2-1*").replace(/\^/g, "**");
-  if(!ALLOWED.test(body)) throw new Error("illegal character in formula");
-  if(!body.trim()) throw new Error("formula is empty");
-  const names = freeNamesOf(text), outer = bodyFunction(body, names);
-  const bind = (values = {}) => outer(...ENV_VALS, ...names.map(n => values[n] ?? FREE_DEFAULT));
-  // the type check, and an unknown name's refusal, once: neither depends on what the names are bound to
-  if(typeof probeValue(bind()) !== "number") throw new Error("formula must return a number");
-  return {names, bind, text};                                // text: the normalized source, for a caller that would otherwise normalize again
+  checkBinders(text);
+  if(!ALLOWED.test(text)) throw new Error("illegal character in formula");
+  if(!text.trim()) throw new Error("formula is empty");
+  const tree = treeOfFormula(text), dummies = dummiesOf(text);
+  checkNames(text, dummies);
+  return {text, tree, names: freeNamesOf(text, dummies)};
+}
+// every name in the normalized text is a variable, a function, a constant, a free letter or a binder's dummy, or it is
+// refused here, in the probe's words: the probe meets a name only on the branch it takes, so x > 0 ? x : foo compiled
+function checkNames(text, dummies = dummiesOf(text)){
+  for(const [name] of text.matchAll(IDENTIFIERS))
+    if(!RESERVED.has(name) && !isFreeName(name) && !dummies.includes(name)) throw new Error(unknownName(name));
 }
 // → (x, y, z, r, th, u, v, t) => number, its free names bound to values (or FREE_DEFAULT)
 function compile(src, values){ return bindable(src).bind(values); }
@@ -1165,51 +1375,278 @@ function evalParam(fn, u, t, v = 0){ return fn(u, v, 0, u, u, u, v, t); }
 // a height field gets x, y and their polar form; a wave slice gets x and its depth z (also as y)
 function evalPlane(fn, x, y, t){ const r = Math.hypot(x, y); return fn(x, y, 0, r, Math.atan2(y, x), r, y, t); }
 function evalLine(fn, x, z, t){ return fn(x, z, z, Math.abs(x), x, x, z, t); }
+// a vector field's point gets x, y, z, its distance and angle, and x and y again as u and v (a caller feeding three
+// expressions at one point works the distance and angle out once and passes them); a force law gets the distance alone,
+// as x, r and u
+function evalField(fn, x, y, z, t, r = Math.hypot(x, y, z), th = Math.atan2(y, x)){ return fn(x, y, z, r, th, x, y, t); }
+function evalForce(fn, d, t){ return fn(d, 0, 0, d, 0, d, 0, t); }
+// each kind of renderer's feed, for one point given by name, a variable not given being 0: modes.js says which kind each
+// renderer is. A quantum potential is drawn once, at t = 0, whatever the clock says
+const FEEDS = {
+  line:        (fn, {x = 0, z = 0, t = 0}) => evalLine(fn, x, z, t),
+  plane:       (fn, {x = 0, y = 0, t = 0}) => evalPlane(fn, x, y, t),
+  param:       (fn, {u = 0, v = 0, t = 0}) => evalParam(fn, u, t, v),
+  field:       (fn, {x = 0, y = 0, z = 0, t = 0}) => evalField(fn, x, y, z, t),
+  force:       (fn, {r = 0, t = 0}) => evalForce(fn, r, t),
+  potential:   (fn, {x = 0}) => evalLine(fn, x, 0, 0),
+  potential2d: (fn, {x = 0, y = 0}) => evalPlane(fn, x, y, 0),
+};
 
-// the formula as it reads on the plate: 3x, θ, π, · for products, superscript powers, ∫ with its limits; what
-// it prints pastes back, so a limit is bare only when LaTeX reads it as one (a number, a letter, a symbol)
-const PLATE_DIGITS = "0123456789−";                          // the minus is the plate's by the time these print
+Object.assign(WL, {VARS, normalize, readsVars, isFreeName, FREE_DEFAULT, bindable, bindableWith, checkNames, compile, dropLhs, namesOf,
+                   SUPERSCRIPTS, SUBSCRIPTS, respell, PROBE,
+                   evalParam, evalPlane, evalLine, evalField, evalForce, FEEDS});
+})();
+
+/* Wavelace · plate — the formula as the plate prints it
+ * reads:   dummiesOf, LETTER, BINDERS (latex.js), VARS, normalize, SUPERSCRIPTS, SUBSCRIPTS, respell (formula.js),
+ *          treeOfPlate, BINARY_LEVELS (formula-tree.js)
+ * exports: pretty, prettyTriple, platesOfNormalized, triplePlatesOfNormalized, samePlates, prettyName, printFormula, NOTATIONS,
+ *          BARE_CALLS
+ *
+ * The plate is the large line above the plot. It prints the formula from its tree, set as a reader would write it:
+ * θ and π, · for a product, 3x, superscript powers, ∫ Σ ∏ with their limits, and a bracket only where the reading
+ * needs one. A notation says how a call is spelled. The maths one, the plate's own, spells a call as a textbook does,
+ * |x|, 45°, √x, n! and sin t; the plain one spells every call as the formula box takes it, so its plate pastes back.
+ * test/plate.test.js compiles every preset's plate in both again, and holds it to the same values.
+ *
+ * A printed node is {text, prec, closedForm, readsAsOperand, readsAsTerm}. prec is how tightly it binds. closedForm,
+ * where it has one, is the printed node to use when something binding tighter follows: Σ and d/dx would otherwise
+ * take that into their reach when read again, and sin t/3 would be misread by a person. The last two say how a pasted
+ * Σ or d/dx reads it back: as one operand, or as one term, a chain of products and quotients of operands, which is
+ * where a Σ's reach ends. The setting every printer is handed is {spellings, atoms}: the notation's table of call
+ * spellings, and the names a number multiplies with no dot. It is not called ctx, which in this repo is a canvas. */
+(() => {
+"use strict";
+const WL = window.Wavelace = window.Wavelace || {};
+const {dummiesOf, LETTER, BINDERS, VARS, normalize, SUPERSCRIPTS, SUBSCRIPTS, respell, treeOfPlate, BINARY_LEVELS} = WL;
+
+// a formula as its plate, in a notation of NOTATIONS (below): maths, the plate's own, or plain
+function pretty(src, notation = "maths"){
+  if(!Object.hasOwn(NOTATIONS, notation)) throw new Error(`${notation} is not a notation: ${Object.keys(NOTATIONS).join(" or ")}`);
+  return printFormula(normalize(src), NOTATIONS[notation]);
+}
+// normalized text as a plate, its calls spelled by `spellings`, a notation's table
+const printFormula = (text, spellings) => printerOf(text)(spellings);
+// normalized text read once, as the plate reads it (treeOfPlate), and printed in whichever spellings it is handed
+function printerOf(text){
+  const tree = treeOfPlate(text), atoms = atomsOf(text);
+  return spellings => print(tree, {spellings, atoms}).text;
+}
+// three expressions as their plate shows them, one bracket round the three
+const prettyTriple = (exprs, notation) => tripled(["x", "y", "z"].map(k => pretty(exprs[k], notation)));
+const tripled = plates => `(${plates.join(",  ")})`;
+
+// the plate in every notation, {maths, plain}, read once from the text the renderer's compiler normalized: what the
+// session keeps, so the switch between them only chooses, and how the complex renderer's plate is read with its names
+const platesOfNormalized = text => inEveryNotation(printerOf(text));
+// three normalized texts, x y z, as one plate in every notation
+function triplePlatesOfNormalized(texts){
+  const parts = texts.map(platesOfNormalized);
+  return inEveryNotation((_, notation) => tripled(parts.map(plates => plates[notation])));
+}
+// one plate that reads the same in every notation: a spec renderer's, the law it runs
+const samePlates = plate => inEveryNotation(() => plate);
+const inEveryNotation = printIn => Object.fromEntries(Object.entries(NOTATIONS).map(([notation, spellings]) =>
+  [notation, printIn(spellings, notation)]));
+// the names a number multiplies with no dot between, 3x and 3θ, as LaTeX's silent product reads them: the plot's
+// variables and the binders' dummies. A free name keeps its dot, 2 · x₁, which reads as one
+const atomsOf = text => new Set([...VARS, ...dummiesOf(text)]);
+
+/* ---------- how tightly each node binds ---------- */
+
+// loosest first: the ternary, the reader's binary levels, then a prefix (−x, and in maths √x and
+// sin t), a power, a postfix (x!, x°) and a node nothing can split
+const CONDITIONAL = 1;
+const RANK = Object.fromEntries(BINARY_LEVELS.flatMap((ops, level) => ops.map(op => [op, CONDITIONAL + 1 + level])));
+const SUM = RANK["+"], PRODUCT = RANK["*"];
+const PREFIX = PRODUCT + 1, POWER = PREFIX + 1, POSTFIX = POWER + 1, WHOLE = POSTFIX + 1;
+const UNCHAINED = new Set([RANK["=="], RANK["<"]]);          // (a < b) < c reads as nobody means it, so it keeps its bracket
+const ARITHMETIC = new Set([SUM, PRODUCT]);
+
+// a printed node nothing can split: a number, a name, a call, a bracket, bars
+const whole = text => ({text, prec: WHOLE, readsAsOperand: true, readsAsTerm: true});
+const bracketed = child => whole(`(${child.text})`);
+// a node the reading would let reach past its end, Σ and d/dx: closed, it is bracketed whole
+const reaching = (text, prec) => ({text, prec, closedForm: bracketed({text}), readsAsOperand: false, readsAsTerm: false});
+// a node that reads back as neither an operand nor a term, and one that a pasted Σ takes whole
+const loose = (text, prec) => ({text, prec, readsAsOperand: false, readsAsTerm: false});
+const oneOperand = (text, prec) => ({text, prec, readsAsOperand: true, readsAsTerm: true});
+// a node built around a child, and its closed form built around the child's, where the child has one
+const withClosedForm = (child, build) => ({...build(child), closedForm: child.closedForm && build(child.closedForm)});
+
+/* ---------- printing a node ---------- */
+
+const print = (node, setting) => (Object.hasOwn(PRINTERS, node.op) ? PRINTERS[node.op] : printBinary)(node, setting);
+const PRINTERS = {
+  number: node => whole(node.text),
+  name: node => whole(prettyName(node.name)),
+  prefix: printPrefix,
+  "^": printPower,
+  call: printCall,
+  "?": printConditional,
+  ",": printSequence,
+};
+
+const SIGN_GLYPH = {"-": "−", "+": "+", "!": "!"};
+function printPrefix(node, setting){
+  const sign = SIGN_GLYPH[node.sign];
+  return withClosedForm(asArgument(print(node.arg, setting)), arg => loose(sign + arg.text, PREFIX));
+}
+
+// a base is bracketed unless nothing can split it; it reads as one operand when it is a number or a name with its power
+function printPower(node, setting){
+  const base = asLeft(print(node.left, setting), POWER), text = base.text + exponentOf(node.right, setting);
+  return isLeaf(node.left) ? oneOperand(text, POWER) : loose(text, POWER);
+}
+const isLeaf = node => node.op === "number" || node.op === "name";
+// a whole number raised (x², 2⁻³), a plain number or one letter after a ^ (x^0.5, x^k), anything else bracketed after one
+function exponentOf(node, setting){
+  const text = print(node, setting).text;
+  if(isWholeNumber(node)) return script(SUPERSCRIPTS, text);
+  const bare = node.op === "number" || (node.op === "name" && [...text].length === 1);
+  return bare ? `^${text}` : `^(${text})`;
+}
+// a number, or a minus before one, as a literal written; and one with digits alone
+const unsigned = node => node.op === "prefix" && node.sign === "-" ? node.arg : node;
+const numeral = node => unsigned(node).op === "number";
+const isWholeNumber = node => numeral(node) && /^\d+$/.test(unsigned(node).text);
+
+function printCall(node, setting){
+  if(isBinder(node)) return BINDER_PRINTERS[node.name](node, setting);
+  if(Object.hasOwn(setting.spellings, node.name)) return setting.spellings[node.name](node, setting);
+  return callForm(node, setting);
+}
+const callForm = (node, setting) => whole(`${node.name}(${node.args.map(arg => print(arg, setting).text).join(", ")})`);
+const isBinder = node => Object.hasOwn(BINDER_PRINTERS, node.name)
+  && node.args.length === BINDERS[node.name].parts.length && node.args[1].op === "name";
+
+function printConditional(node, setting){
+  const test = asLeft(print(node.test, setting), CONDITIONAL + 1);
+  return loose(`${test.text} ? ${print(node.then, setting).text} : ${print(node.otherwise, setting).text}`, CONDITIONAL);
+}
+// a comma is taken only inside brackets, so a sequence carries its own
+function printSequence(node, setting){
+  return whole(`(${print(node.left, setting).text}, ${print(node.right, setting).text})`);
+}
+
+/* ---------- binary operators ---------- */
+
+const INFIX = {"*": " · ", "/": "/", "%": "%", "-": " − "};
+const infixOf = op => Object.hasOwn(INFIX, op) ? INFIX[op] : ` ${op} `;
+
+function printBinary(node, setting){
+  const prec = RANK[node.op];
+  const left = asLeft(print(node.left, setting), prec), right = asRight(print(node.right, setting), prec);
+  const dotless = node.op === "*" && readsAsSilentProduct(node, right, setting);
+  const multiplicative = node.op === "*" || node.op === "/";
+  return withClosedForm(right, after => ({text: left.text + (dotless ? "" : infixOf(node.op)) + after.text, prec,
+                                          readsAsOperand: dotless && atomic(node.right, setting),
+                                          readsAsTerm: multiplicative && left.readsAsTerm && after.readsAsOperand}));
+}
+// 3x, 3θ, 3x², 3(x + 1), and the complex renderer's 2i: a number before an atom, a bracket or a product nobody wrote
+// a sign for loses its dot, as LaTeX's silent product reads it back. After anything else the dot stays, so s z is s · z
+const readsAsSilentProduct = (node, right, setting) =>
+  numeral(node.left) && (node.implicit || atomic(node.right, setting) || opensWithBracket(right));
+const atomic = (node, setting) => (node.op === "name" && setting.atoms.has(node.name)) || (node.op === "^" && atomic(node.left, setting));
+
+/* ---------- brackets: decided here and nowhere else ---------- */
+
+// what a printed child begins with, which is what the reading of the text around it meets first
+const leadsWithSign = printed => printed.text.startsWith(SIGN_GLYPH["-"]);
+const opensWithBracket = printed => printed.text.startsWith("(");
+
+// a child on its operator's left: in its closed form before a tighter operator where that needs no bracket of its own
+// (sin(t)², (Σ …) · x), and bracketed below the operator's rank, or as a power's base unless nothing can split it
+function asLeft(child, prec){
+  const closed = prec >= PRODUCT ? child.closedForm : undefined;
+  if(closed && !bracketsAsLeft(closed, prec)) return closed;
+  return bracketsAsLeft(child, prec) ? bracketed(child) : child;                 // (3 + cos v) · cos u
+}
+const bracketsAsLeft = (child, prec) => prec === POWER ? child.prec < WHOLE          // (−x)², (x²)³
+  : child.prec < prec || (child.prec === prec && UNCHAINED.has(prec));
+// a child on its operator's right: bracketed below the rank, at the same rank, which keeps the grouping the source
+// chose (a − (b − c), and the bits of x · (y · z)), and after arithmetic where it leads with a sign, a/(−b) and
+// a · (−b), as a textbook sets them: a sign straight after an operator is easily misread
+const asRight = (child, prec) => bracketsAsRight(child, prec) ? bracketed(child) : child;
+const bracketsAsRight = (child, prec) => child.prec <= prec || (ARITHMETIC.has(prec) && leadsWithSign(child));
+// a prefix's argument: −(a + b) and −(−x) bracketed, −d/dx (…) and −√x not
+const asArgument = child => child.prec < PREFIX || leadsWithSign(child) ? bracketed(child) : child;
+
+/* ---------- the maths notation's spellings ---------- */
+
+// each takes the call node and the setting and returns a printed node; a call with other than one argument is
+// printed as called, as is anything a spelling has no form for
+function onOneArgument(spell){
+  return (node, setting) => node.args.length === 1 ? spell(node.args[0], setting) : callForm(node, setting);
+}
+// |x|: the bars delimit it, so nothing outside can split it
+const bars = onOneArgument((arg, setting) => whole(`|${print(arg, setting).text}|`));
+// a call's argument as the maths notation sets it beside a sign: bare when it is a number or a name, bracketed otherwise
+const besideSign = (arg, setting) => { const inner = print(arg, setting); return isLeaf(arg) ? inner : bracketed(inner); };
+// x° and x!: after a number or a name, and after a bracket otherwise, which 2x! would need; either binds to what is
+// before it, so a pasted Σ reads it as one operand of its summand
+const postfix = mark => onOneArgument((arg, setting) => oneOperand(besideSign(arg, setting).text + mark, POSTFIX));
+// √x and √(…): a pasted √ takes the next atom, so either reads back, and as one operand
+const root = onOneArgument((arg, setting) => oneOperand("√" + besideSign(arg, setting).text, PREFIX));
+// sin t, where its argument is a number or a name; closed, sin(t), so the plate never prints sin t/3 or sin t²
+const BARE_CALLS = ["sin", "cos", "tan", "sec", "csc", "cot", "sinh", "cosh", "tanh", "log"];
+const bareCall = name => onOneArgument((arg, setting) => {
+  const inner = print(arg, setting), called = whole(`${name}(${inner.text})`);
+  return isLeaf(arg) ? {...oneOperand(`${name} ${inner.text}`, PREFIX), closedForm: called} : called;
+});
+
+// how each notation spells a call it has a spelling for, by the call's name; a call it has none for is printed as called
+const NOTATIONS = {
+  maths: {abs: bars, deg: postfix("°"), factorial: postfix("!"), sqrt: root,
+          ...Object.fromEntries(BARE_CALLS.map(name => [name, bareCall(name)]))},
+  plain: {},
+};
+
+/* ---------- the binders ---------- */
+
+// ∫ prints its dummy in the differential, which closes it; Σ and ∏ print theirs in the lower limit. Σ, ∏ and d/dx
+// reach as far as a term when read again, so a summand that is not one is bracketed, and d/dx brackets its term always
+const SERIES_SIGN = {sum: "Σ", prod: "∏"};
+function printSeries(node, setting){
+  const [body, index, from, to] = node.args, summand = print(body, setting);
+  const limits = lowerLimit(`${prettyName(index.name)}=${print(from, setting).text}`) + upperLimit(print(to, setting).text);
+  return reaching(`${SERIES_SIGN[node.name]}${limits} ${summand.readsAsTerm ? summand.text : bracketed(summand).text}`, PREFIX);
+}
+function printIntegral(node, setting){
+  const [body, variable, from, to] = node.args;
+  const limits = lowerLimit(print(from, setting).text) + upperLimit(print(to, setting).text);
+  return loose(`∫${limits} ${print(body, setting).text} d${prettyName(variable.name)}`, PREFIX);
+}
+function printDerivative(node, setting){
+  const [body, variable] = node.args;
+  return reaching(`d/d${prettyName(variable.name)} (${print(body, setting).text})`, PREFIX);
+}
+const BINDER_PRINTERS = {sum: printSeries, prod: printSeries, integral: printIntegral, diff: printDerivative};
+
+// a limit pastes back, so it is bare only when LaTeX reads it as one: a number, a letter, a symbol
+const PLATE_DIGITS = "0123456789−";
 const script = (table, digits) => respell(PLATE_DIGITS, table, digits);
-const ATOM = new RegExp(`^(?:\\d+(?:\\.\\d+)?|[${LETTER}θπ∞])$`);   // a subscripted name is bracketed: LIMIT reads a bare one as a letter
-const limit = (mark, table, text) => /^−?\d+$/.test(text) ? script(table, text) : mark + (ATOM.test(text) ? text : `(${text})`);
-// ∫ prints its dummy in the differential; Σ and ∏ print theirs in the lower limit, which limit()
-// already brackets because k=1 is not an atom — and a bracketed limit is what limitAt reads back.
-// d/dx keeps its term in brackets whatever the term is: unbracketed it would reach only as far as
-// termEnd when read again, so a printed sum of two things would come back as the derivative of one.
-const SIGN = {sum: "Σ", prod: "∏"};
-const printBinders = text => eachBinder(text, (head, expr, name, from, to) =>
-  head === "diff"       ? `d/d${name} (${expr})`
-  : head === "integral" ? `∫${limit("_", SUB, from)}${limit("^", SUPER, to)} ${expr} d${name}`
-                        : `${SIGN[head]}${limit("_", SUB, `${name}=${from}`)}${limit("^", SUPER, to)} ${expr}`);
+const ATOM = new RegExp(`^(?:\\d+(?:\\.\\d+)?|[${LETTER}θπ∞])$`);   // a subscripted name is bracketed: a bare one reads as a letter
+const limitOf = (mark, table) => text => /^−?\d+$/.test(text) ? script(table, text) : mark + (ATOM.test(text) ? text : `(${text})`);
+const lowerLimit = limitOf("_", SUBSCRIPTS), upperLimit = limitOf("^", SUPERSCRIPTS);
+
+/* ---------- names ---------- */
+
 // a name as the plate and the rail show it, and as it pastes back: θ π ∞ for the ones the language
 // spells in letters (in a subscript too, x_θ), a digit subscript set low (x_1 is x₁, since normalize
 // reads ₁ as _{1}), one letter as written, and a longer one in braces, since x_max would read as x_m times ax
 const NAME_GLYPH = {th: "θ", pi: "π", inf: "∞"};
 const glyphOf = name => Object.hasOwn(NAME_GLYPH, name) ? NAME_GLYPH[name] : name;
 function prettySubscript(sub){
-  if(/^\d+$/.test(sub)) return script(SUB, sub);
+  if(/^\d+$/.test(sub)) return script(SUBSCRIPTS, sub);
   return [...sub].length === 1 ? `_${sub}` : `_{${sub}}`;
 }
 function prettyName(name){
   const [base, sub] = name.split("_");
   return glyphOf(base) + (sub === undefined ? "" : prettySubscript(glyphOf(sub)));
 }
-function pretty(expr){
-  const text = normalize(expr), atoms = [...VARS, "θ", ...dummiesOf(text)].join("|");
-  // a whole number before a variable loses its dot (3*x is 3x, 3*th is 3θ); a free name keeps it, a
-  // subscripted one included, which by now carries its digits low
-  const implicit = new RegExp(`(?<![${WORD}])(\\d+(?:\\.\\d+)?)\\s*\\*\\s*(?=(?:${atoms})(?![${WORD}${SUB}_{])|\\()`, "g");
-  return printBinders(text
-    .replace(IDENT, prettyName)
-    .replace(implicit, "$1")                                    // 3*x reads as 3x
-    .replace(/\*/g, " · ").replace(/-/g, "−").replace(/\s+/g, " ")
-    .replace(/\^(?:(−?\d+)|\((−?\d+)\))/g, (_, d, e) => script(SUPER, d ?? e)));   // x^2 and the pasted x² alike
-}
-// three expressions as their plate shows them, one bracket round the three
-const prettyTriple = exprs => `(${pretty(exprs.x)},  ${pretty(exprs.y)},  ${pretty(exprs.z)})`;
 
-Object.assign(WL, {VARS, ENV, GLOSS, normalize, readsVars, isFreeName, FREE_DEFAULT, bindable, compile, pretty, prettyTriple, prettyName, dropLhs, namesOf,
-                   evalParam, evalPlane, evalLine});
+Object.assign(WL, {pretty, prettyTriple, platesOfNormalized, triplePlatesOfNormalized, samePlates, prettyName, printFormula, NOTATIONS, BARE_CALLS});
 })();
 
 export const {fromLatex, normalize, pretty, prettyName, bindable, compile, readsVars, isFreeName, VARS, ENV, BINDERS, GREEK, FREE_DEFAULT} = window.Wavelace;
