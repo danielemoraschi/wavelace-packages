@@ -1,4 +1,4 @@
-/*! @wavelace/formula 0.3.0 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/functions.js and js/formula-tree.js and js/formula.js and js/plate.js */
+/*! @wavelace/formula 0.4.0 | MIT | © 2026 Daniele Moraschi | generated from js/latex.js and js/functions.js and js/formula-tree.js and js/formula.js and js/plate.js */
 const window = {};
 /* Wavelace · latex — a LaTeX subset translated into the formula language
  * reads:   nothing

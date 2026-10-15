@@ -8,6 +8,8 @@ own under the MIT licence.
 | [@wavelace/formula](formula) | LaTeX in, a fast JavaScript function out: the formula layer, and its React pieces at `@wavelace/formula/react`. |
 | [@wavelace/embed](embed) | Wavelace's animated plots in your page: an iframe of any preset or formula from a few options, and `<Embed>` at `@wavelace/embed/react`. |
 
+Each package's folder holds its `CHANGELOG.md`, what changed in each version, which is also its release's notes.
+
 Everything here is generated from the Wavelace source, which is private, and sent with the tag that
 publishes it: a package's folder, this README and the workflow. So a change made here is overwritten
 by the next version. Issues are welcome here; a pull request is ported upstream by hand.
