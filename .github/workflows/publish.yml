@@ -34,7 +34,8 @@ jobs:
       - name: Test
         run: node --test "$PACKAGE/$PACKAGE.test.mjs"   # the file: given a folder, node --test runs it as one empty test and passes
       - name: The release notes, the version's section of its changelog
-        run: test -s "$PACKAGE/RELEASE.md" || { echo "$PACKAGE/RELEASE.md is missing or empty: a version says what changed in it" >&2; exit 1; }
+        run: |
+          test -s "$PACKAGE/RELEASE.md" || { echo "$PACKAGE/RELEASE.md is missing or empty: a version says what changed in it" >&2; exit 1; }
       - name: Publish
         run: |
           cd "$PACKAGE"

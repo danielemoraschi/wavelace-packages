@@ -2,7 +2,7 @@
 
 What changed in @wavelace/formula, newest first. Wavelace's own changes, the app's and the site's, are at https://www.wavelace.com/changelog.
 
-## 0.4.0
+## 0.3.1
 
 15 October 2026
 
