@@ -1,4 +1,4 @@
-/*! @wavelace/embed/react 0.2.1 | MIT | © 2026 Daniele Moraschi | generated from tools/pkg/embed/react.js */
+/*! @wavelace/embed/react 0.3.0 | MIT | © 2026 Daniele Moraschi | generated from tools/pkg/embed/react.js */
 /* @wavelace/embed/react: a Wavelace plot in a React app
  *
  * The frame is the loader's, embedAttributes, so nothing is decided twice. New props change only the

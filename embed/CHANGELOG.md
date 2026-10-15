@@ -2,6 +2,12 @@
 
 What changed in @wavelace/embed, newest first. Wavelace's own changes, the app's and the site's, are at https://www.wavelace.com/changelog.
 
+## 0.3.0
+
+15 October 2026
+
+- Changed a link's spelling to the app's own, now that the package writes links with the app's code: a dial's value is written to three decimals and the keys come in the app's order. Every link opens what it opened.
+
 ## 0.2.1
 
 15 October 2026

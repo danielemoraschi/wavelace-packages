@@ -1,6 +1,6 @@
 {
   "name": "@wavelace/embed",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Wavelace's animated maths plots in your page: an iframe of any preset or formula, from a few options.",
   "keywords": [
     "math",

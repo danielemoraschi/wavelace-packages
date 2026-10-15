@@ -1,13 +1,116 @@
-/*! @wavelace/embed 0.2.1 | MIT | © 2026 Daniele Moraschi | generated from tools/pkg/embed/embed.js */
-const TABLES = {"flags":{"playing":true,"spin":false,"ground":true,"trace":false,"particles":true,"fill":true,"maths":true,"deck":true,"formula":true,"title":true,"orbit":true,"pan":true},"hashKeys":{"playing":"play"},"dials":["span","speed","amp","depth","turns","vspan","x0","y0","z0","seeds","sigma","k0"],"views":["iso","top","front","side","fit"],"renderers":["wave","polar","surface","curve","shape","complex","quantum","quantum2d","flow","swarm","bodies","bellman"],"triple":["curve","shape","flow"],"presets":[{"slug":"chirp-wave","name":"Chirp Wave","renderer":"wave"},{"slug":"travelling-ripple","name":"Travelling Ripple","renderer":"wave"},{"slug":"beat-interference","name":"Beat Interference","renderer":"wave"},{"slug":"damped-pulse","name":"Damped Pulse","renderer":"wave"},{"slug":"wave-packet","name":"Wave Packet","renderer":"wave"},{"slug":"square-fourier","name":"Square Fourier","renderer":"wave"},{"slug":"sinc-splash","name":"Sinc Splash","renderer":"wave"},{"slug":"breathing-gauss","name":"Breathing Gauss","renderer":"wave"},{"slug":"standing-wave","name":"Standing Wave","renderer":"wave"},{"slug":"phase-fold","name":"Phase Fold","renderer":"wave"},{"slug":"saw-cascade","name":"Saw Cascade","renderer":"wave"},{"slug":"bessel-ish","name":"Bessel-ish","renderer":"wave"},{"slug":"twin-solitons","name":"Twin Solitons","renderer":"wave"},{"slug":"living-wave","name":"Living Wave","renderer":"wave"},{"slug":"living-wave-cos","name":"Living Wave (cos)","renderer":"wave"},{"slug":"living-wave-tan","name":"Living Wave (tan)","renderer":"wave"},{"slug":"cusp-heart","name":"Cusp Heart","renderer":"wave"},{"slug":"fractal-cosine","name":"Fractal Cosine","renderer":"wave"},{"slug":"am-carrier","name":"AM Carrier","renderer":"wave"},{"slug":"heartbeat","name":"Heartbeat","renderer":"wave"},{"slug":"depth-sheet","name":"Depth Sheet","renderer":"wave"},{"slug":"trefoil-bloom","name":"Trefoil Bloom","renderer":"polar"},{"slug":"polar-mandala","name":"Polar Mandala","renderer":"polar"},{"slug":"fourfold-mandala","name":"Fourfold Mandala","renderer":"polar"},{"slug":"butterfly-curve","name":"Butterfly Curve","renderer":"polar"},{"slug":"breathing-rose","name":"Breathing Rose","renderer":"polar"},{"slug":"pulsing-cardioid","name":"Pulsing Cardioid","renderer":"polar"},{"slug":"lemniscate","name":"Lemniscate","renderer":"polar"},{"slug":"fermat-spiral","name":"Fermat Spiral","renderer":"polar"},{"slug":"cross-ripple","name":"Cross Ripple","renderer":"surface"},{"slug":"egg-carton","name":"Egg Carton","renderer":"surface"},{"slug":"checker-waves","name":"Checker Waves","renderer":"surface"},{"slug":"radial-pond","name":"Radial Pond","renderer":"surface"},{"slug":"ripple-tank","name":"Ripple Tank","renderer":"surface"},{"slug":"spiral-wave","name":"Spiral Wave","renderer":"surface"},{"slug":"monkey-saddle","name":"Monkey Saddle","renderer":"surface"},{"slug":"saddle-swirl","name":"Saddle Swirl","renderer":"surface"},{"slug":"helix","name":"Helix","renderer":"curve"},{"slug":"torus-knot","name":"Torus Knot","renderer":"curve"},{"slug":"living-lissajous","name":"Living Lissajous","renderer":"curve"},{"slug":"lissajous-knot","name":"Lissajous Knot","renderer":"curve"},{"slug":"spherical-spiral","name":"Spherical Spiral","renderer":"curve"},{"slug":"trefoil-knot","name":"Trefoil Knot","renderer":"curve"},{"slug":"spirograph","name":"Spirograph","renderer":"curve"},{"slug":"tornado","name":"Tornado","renderer":"curve"},{"slug":"vivianis-curve","name":"Viviani's Curve","renderer":"curve"},{"slug":"breathing-ring","name":"Breathing Ring","renderer":"curve"},{"slug":"mandelbrot","name":"Mandelbrot","renderer":"complex"},{"slug":"breathing-julia","name":"Breathing Julia","renderer":"complex"},{"slug":"newton-basins","name":"Newton Basins","renderer":"complex"},{"slug":"burning-ship","name":"Burning Ship","renderer":"complex"},{"slug":"z-squared","name":"z squared","renderer":"complex"},{"slug":"simple-pole","name":"Simple Pole","renderer":"complex"},{"slug":"rational-map","name":"Rational Map","renderer":"complex"},{"slug":"complex-exp","name":"Complex Exp","renderer":"complex"},{"slug":"complex-sine","name":"Complex Sine","renderer":"complex"},{"slug":"mobius-turn","name":"Möbius Turn","renderer":"complex"},{"slug":"heart","name":"Heart","renderer":"shape"},{"slug":"breathing-sphere","name":"Breathing Sphere","renderer":"shape"},{"slug":"torus","name":"Torus","renderer":"shape"},{"slug":"twisted-torus","name":"Twisted Torus","renderer":"shape"},{"slug":"mobius-strip","name":"Möbius Strip","renderer":"shape"},{"slug":"klein-bottle","name":"Klein Bottle","renderer":"shape"},{"slug":"seashell","name":"Seashell","renderer":"shape"},{"slug":"alains-curve","name":"Alain's Curve","renderer":"polar"},{"slug":"guitar-string","name":"Guitar String","renderer":"surface"},{"slug":"gaussian-bump","name":"Gaussian Bump","renderer":"surface"},{"slug":"saddle-elliptic","name":"Saddle (elliptic)","renderer":"surface"},{"slug":"free-packet","name":"Free Packet","renderer":"quantum"},{"slug":"tunnelling-barrier","name":"Tunnelling Barrier","renderer":"quantum"},{"slug":"potential-step","name":"Potential Step","renderer":"quantum"},{"slug":"harmonic-well","name":"Harmonic Well","renderer":"quantum"},{"slug":"double-well","name":"Double Well","renderer":"quantum"},{"slug":"double-slit","name":"Double Slit","renderer":"quantum2d"},{"slug":"single-slit","name":"Single Slit","renderer":"quantum2d"},{"slug":"scattering-disc","name":"Scattering Disc","renderer":"quantum2d"},{"slug":"orbiting-packet","name":"Orbiting Packet","renderer":"quantum2d"},{"slug":"free-packet-2d","name":"Free Packet 2D","renderer":"quantum2d"},{"slug":"lorenz-attractor","name":"Lorenz Attractor","renderer":"flow"},{"slug":"rossler-attractor","name":"Rössler Attractor","renderer":"flow"},{"slug":"thomas-attractor","name":"Thomas Attractor","renderer":"flow"},{"slug":"whirlpool","name":"Whirlpool","renderer":"flow"},{"slug":"figure-8","name":"Figure-8","renderer":"bodies"},{"slug":"lagrange-triangle","name":"Lagrange Triangle","renderer":"bodies"},{"slug":"hierarchical-triple","name":"Hierarchical Triple","renderer":"bodies"},{"slug":"sun-and-planets","name":"Sun and Planets","renderer":"bodies"},{"slug":"double-pendulum","name":"Double Pendulum","renderer":"bodies"},{"slug":"triple-pendulum","name":"Triple Pendulum","renderer":"bodies"},{"slug":"gravity-disc","name":"Gravity Disc","renderer":"swarm"},{"slug":"springs","name":"Springs","renderer":"swarm"},{"slug":"molecules","name":"Molecules","renderer":"swarm"},{"slug":"rose-20","name":"Rose 20","renderer":"polar"},{"slug":"cubic-spiral-sink","name":"Cubic Spiral Sink","renderer":"flow"},{"slug":"bellman-3-3","name":"Bellman 3×3","renderer":"bellman"},{"slug":"russell-norvig-4-3","name":"Russell–Norvig 4×3","renderer":"bellman"},{"slug":"cliff-walk","name":"Cliff Walk","renderer":"bellman"},{"slug":"maze","name":"Maze","renderer":"bellman"},{"slug":"laplace-transform","name":"Laplace Transform","renderer":"surface"},{"slug":"huygens-slit","name":"Huygens Slit","renderer":"surface"},{"slug":"huygens-slits","name":"Huygens Slits","renderer":"surface"},{"slug":"drumhead","name":"Drumhead","renderer":"surface"},{"slug":"charged-rod","name":"Charged Rod","renderer":"surface"},{"slug":"chirp-transform","name":"Chirp Transform","renderer":"surface"},{"slug":"heat-kernel","name":"Heat Kernel","renderer":"wave"},{"slug":"uncertainty","name":"Uncertainty","renderer":"wave"},{"slug":"normal-distribution","name":"Normal Distribution","renderer":"wave"},{"slug":"gamma-function","name":"Gamma Function","renderer":"wave"},{"slug":"pendulum-period","name":"Pendulum Period","renderer":"wave"},{"slug":"gaussian-blur","name":"Gaussian Blur","renderer":"wave"},{"slug":"logarithmic-integral","name":"Logarithmic Integral","renderer":"wave"},{"slug":"euler-spiral","name":"Euler Spiral","renderer":"curve"},{"slug":"fresnel-phasor","name":"Fresnel Phasor","renderer":"curve"},{"slug":"antenna-beam","name":"Antenna Beam","renderer":"polar"},{"slug":"kronig-penney","name":"Kronig–Penney","renderer":"quantum"},{"slug":"smooth-step","name":"Smooth Step","renderer":"quantum"},{"slug":"soft-corral","name":"Soft Corral","renderer":"quantum2d"},{"slug":"square-petal","name":"Square Petal","renderer":"polar"},{"slug":"square-orbit","name":"Square Orbit","renderer":"curve"},{"slug":"partial-sums","name":"Partial Sums","renderer":"wave"},{"slug":"taylor-sine","name":"Taylor Sine","renderer":"wave"},{"slug":"viete-product","name":"Viete Product","renderer":"wave"},{"slug":"gamma-poles","name":"Gamma Poles","renderer":"wave"},{"slug":"piecewise","name":"Piecewise","renderer":"wave"},{"slug":"membrane-modes","name":"Membrane Modes","renderer":"surface"},{"slug":"diffraction","name":"Diffraction","renderer":"surface"},{"slug":"diffusion-front","name":"Diffusion Front","renderer":"surface"},{"slug":"gradient-flow","name":"Gradient Flow","renderer":"flow"},{"slug":"chain-rule","name":"Chain Rule","renderer":"wave"},{"slug":"tangent-tube","name":"Tangent Tube","renderer":"shape"},{"slug":"crest-doubling","name":"Crest Doubling","renderer":"wave"},{"slug":"resonance-curve","name":"Resonance Curve","renderer":"wave"},{"slug":"launch-angle","name":"Launch Angle","renderer":"wave"},{"slug":"dispersion","name":"Dispersion","renderer":"wave"},{"slug":"rational-rose","name":"Rational Rose","renderer":"polar"},{"slug":"gielis-supershape","name":"Gielis Supershape","renderer":"polar"},{"slug":"focal-conic","name":"Focal Conic","renderer":"polar"},{"slug":"chladni-plate","name":"Chladni Plate","renderer":"surface"},{"slug":"cusp-catastrophe","name":"Cusp Catastrophe","renderer":"surface"},{"slug":"knot-family","name":"Knot Family","renderer":"curve"},{"slug":"horn-torus","name":"Horn Torus","renderer":"shape"},{"slug":"superellipsoid","name":"Superellipsoid","renderer":"shape"},{"slug":"julia-dials","name":"Julia Dials","renderer":"complex"},{"slug":"multibrot","name":"Multibrot","renderer":"complex"},{"slug":"newton-petals","name":"Newton Petals","renderer":"complex"},{"slug":"barrier-or-well","name":"Barrier or Well","renderer":"quantum"},{"slug":"reflectionless-well","name":"Reflectionless Well","renderer":"quantum"},{"slug":"squeezed-packet","name":"Squeezed Packet","renderer":"quantum"},{"slug":"hopf-bifurcation","name":"Hopf Bifurcation","renderer":"flow"},{"slug":"van-der-pol","name":"Van der Pol","renderer":"flow"},{"slug":"driven-springs","name":"Driven Springs","renderer":"swarm"},{"slug":"rutherford-scattering","name":"Rutherford Scattering","renderer":"bodies"},{"slug":"ring-trap","name":"Ring Trap","renderer":"bodies"},{"slug":"coupled-oscillators","name":"Coupled Oscillators","renderer":"bodies"},{"slug":"bead-string","name":"Bead String","renderer":"bodies"},{"slug":"lagrange-points","name":"Lagrange Points","renderer":"bodies"},{"slug":"roche-lobe","name":"Roche Lobe","renderer":"bodies"},{"slug":"spring-pendulum","name":"Spring Pendulum","renderer":"bodies"},{"slug":"elastic-chaos","name":"Elastic Chaos","renderer":"bodies"},{"slug":"horseshoe-orbit","name":"Horseshoe Orbit","renderer":"bodies"},{"slug":"quadric-family","name":"Quadric Family","renderer":"shape"},{"slug":"paraboloid-family","name":"Paraboloid Family","renderer":"surface"},{"slug":"burgers-vortex","name":"Burgers Vortex","renderer":"flow"},{"slug":"rabi-oscillation","name":"Rabi Oscillation","renderer":"curve"},{"slug":"supershape-urchin","name":"Supershape Urchin","renderer":"shape"},{"slug":"supershape-pagoda","name":"Supershape Pagoda","renderer":"shape"},{"slug":"supershape-flower","name":"Supershape Flower","renderer":"shape"},{"slug":"hypotrochoid-7-13","name":"Hypotrochoid 7/13","renderer":"curve"},{"slug":"hypotrochoid-7-5","name":"Hypotrochoid 7/5","renderer":"curve"},{"slug":"hypotrochoid-3-4","name":"Hypotrochoid 3/4","renderer":"curve"},{"slug":"helicoid-to-catenoid","name":"Helicoid to Catenoid","renderer":"shape"},{"slug":"residue-staircase","name":"Residue Staircase","renderer":"wave"},{"slug":"lyapunov-descent","name":"Lyapunov Descent","renderer":"curve"},{"slug":"kuen-surface","name":"Kuen Surface","renderer":"shape"},{"slug":"aizawa-attractor","name":"Aizawa Attractor","renderer":"flow"},{"slug":"einstein-rosen-bridge","name":"Einstein–Rosen Bridge","renderer":"shape"},{"slug":"magnetic-field-line","name":"Magnetic Field Line","renderer":"curve"},{"slug":"spinning-drum-mode","name":"Spinning Drum Mode","renderer":"surface"},{"slug":"orbiting-poles","name":"Orbiting Poles","renderer":"complex"},{"slug":"quartic-well","name":"Quartic Well","renderer":"quantum"},{"slug":"enneper-surface","name":"Enneper Surface","renderer":"shape"},{"slug":"four-wing-attractor","name":"Four-Wing Attractor","renderer":"flow"}]};
+/*! @wavelace/embed 0.3.0 | MIT | © 2026 Daniele Moraschi | generated from js/link-codec.js and tools/pkg/embed/embed.js */
+const TABLES = {"modes":{"wave":{"triple":false},"polar":{"triple":false},"surface":{"triple":false},"curve":{"triple":true},"shape":{"triple":true},"complex":{"triple":false},"quantum":{"triple":false},"quantum2d":{"triple":false},"flow":{"triple":true},"swarm":{"triple":false},"bodies":{"triple":false},"bellman":{"triple":false}},"views":["iso","top","front","side","fit"],"presets":[{"slug":"chirp-wave","name":"Chirp Wave","renderer":"wave"},{"slug":"travelling-ripple","name":"Travelling Ripple","renderer":"wave"},{"slug":"beat-interference","name":"Beat Interference","renderer":"wave"},{"slug":"damped-pulse","name":"Damped Pulse","renderer":"wave"},{"slug":"wave-packet","name":"Wave Packet","renderer":"wave"},{"slug":"square-fourier","name":"Square Fourier","renderer":"wave"},{"slug":"sinc-splash","name":"Sinc Splash","renderer":"wave"},{"slug":"breathing-gauss","name":"Breathing Gauss","renderer":"wave"},{"slug":"standing-wave","name":"Standing Wave","renderer":"wave"},{"slug":"phase-fold","name":"Phase Fold","renderer":"wave"},{"slug":"saw-cascade","name":"Saw Cascade","renderer":"wave"},{"slug":"bessel-ish","name":"Bessel-ish","renderer":"wave"},{"slug":"twin-solitons","name":"Twin Solitons","renderer":"wave"},{"slug":"living-wave","name":"Living Wave","renderer":"wave"},{"slug":"living-wave-cos","name":"Living Wave (cos)","renderer":"wave"},{"slug":"living-wave-tan","name":"Living Wave (tan)","renderer":"wave"},{"slug":"cusp-heart","name":"Cusp Heart","renderer":"wave"},{"slug":"fractal-cosine","name":"Fractal Cosine","renderer":"wave"},{"slug":"am-carrier","name":"AM Carrier","renderer":"wave"},{"slug":"heartbeat","name":"Heartbeat","renderer":"wave"},{"slug":"depth-sheet","name":"Depth Sheet","renderer":"wave"},{"slug":"trefoil-bloom","name":"Trefoil Bloom","renderer":"polar"},{"slug":"polar-mandala","name":"Polar Mandala","renderer":"polar"},{"slug":"fourfold-mandala","name":"Fourfold Mandala","renderer":"polar"},{"slug":"butterfly-curve","name":"Butterfly Curve","renderer":"polar"},{"slug":"breathing-rose","name":"Breathing Rose","renderer":"polar"},{"slug":"pulsing-cardioid","name":"Pulsing Cardioid","renderer":"polar"},{"slug":"lemniscate","name":"Lemniscate","renderer":"polar"},{"slug":"fermat-spiral","name":"Fermat Spiral","renderer":"polar"},{"slug":"cross-ripple","name":"Cross Ripple","renderer":"surface"},{"slug":"egg-carton","name":"Egg Carton","renderer":"surface"},{"slug":"checker-waves","name":"Checker Waves","renderer":"surface"},{"slug":"radial-pond","name":"Radial Pond","renderer":"surface"},{"slug":"ripple-tank","name":"Ripple Tank","renderer":"surface"},{"slug":"spiral-wave","name":"Spiral Wave","renderer":"surface"},{"slug":"monkey-saddle","name":"Monkey Saddle","renderer":"surface"},{"slug":"saddle-swirl","name":"Saddle Swirl","renderer":"surface"},{"slug":"helix","name":"Helix","renderer":"curve"},{"slug":"torus-knot","name":"Torus Knot","renderer":"curve"},{"slug":"living-lissajous","name":"Living Lissajous","renderer":"curve"},{"slug":"lissajous-knot","name":"Lissajous Knot","renderer":"curve"},{"slug":"spherical-spiral","name":"Spherical Spiral","renderer":"curve"},{"slug":"trefoil-knot","name":"Trefoil Knot","renderer":"curve"},{"slug":"spirograph","name":"Spirograph","renderer":"curve"},{"slug":"tornado","name":"Tornado","renderer":"curve"},{"slug":"vivianis-curve","name":"Viviani's Curve","renderer":"curve"},{"slug":"breathing-ring","name":"Breathing Ring","renderer":"curve"},{"slug":"mandelbrot","name":"Mandelbrot","renderer":"complex"},{"slug":"breathing-julia","name":"Breathing Julia","renderer":"complex"},{"slug":"newton-basins","name":"Newton Basins","renderer":"complex"},{"slug":"burning-ship","name":"Burning Ship","renderer":"complex"},{"slug":"z-squared","name":"z squared","renderer":"complex"},{"slug":"simple-pole","name":"Simple Pole","renderer":"complex"},{"slug":"rational-map","name":"Rational Map","renderer":"complex"},{"slug":"complex-exp","name":"Complex Exp","renderer":"complex"},{"slug":"complex-sine","name":"Complex Sine","renderer":"complex"},{"slug":"mobius-turn","name":"Möbius Turn","renderer":"complex"},{"slug":"heart","name":"Heart","renderer":"shape"},{"slug":"breathing-sphere","name":"Breathing Sphere","renderer":"shape"},{"slug":"torus","name":"Torus","renderer":"shape"},{"slug":"twisted-torus","name":"Twisted Torus","renderer":"shape"},{"slug":"mobius-strip","name":"Möbius Strip","renderer":"shape"},{"slug":"klein-bottle","name":"Klein Bottle","renderer":"shape"},{"slug":"seashell","name":"Seashell","renderer":"shape"},{"slug":"alains-curve","name":"Alain's Curve","renderer":"polar"},{"slug":"guitar-string","name":"Guitar String","renderer":"surface"},{"slug":"gaussian-bump","name":"Gaussian Bump","renderer":"surface"},{"slug":"saddle-elliptic","name":"Saddle (elliptic)","renderer":"surface"},{"slug":"free-packet","name":"Free Packet","renderer":"quantum"},{"slug":"tunnelling-barrier","name":"Tunnelling Barrier","renderer":"quantum"},{"slug":"potential-step","name":"Potential Step","renderer":"quantum"},{"slug":"harmonic-well","name":"Harmonic Well","renderer":"quantum"},{"slug":"double-well","name":"Double Well","renderer":"quantum"},{"slug":"double-slit","name":"Double Slit","renderer":"quantum2d"},{"slug":"single-slit","name":"Single Slit","renderer":"quantum2d"},{"slug":"scattering-disc","name":"Scattering Disc","renderer":"quantum2d"},{"slug":"orbiting-packet","name":"Orbiting Packet","renderer":"quantum2d"},{"slug":"free-packet-2d","name":"Free Packet 2D","renderer":"quantum2d"},{"slug":"lorenz-attractor","name":"Lorenz Attractor","renderer":"flow"},{"slug":"rossler-attractor","name":"Rössler Attractor","renderer":"flow"},{"slug":"thomas-attractor","name":"Thomas Attractor","renderer":"flow"},{"slug":"whirlpool","name":"Whirlpool","renderer":"flow"},{"slug":"figure-8","name":"Figure-8","renderer":"bodies"},{"slug":"lagrange-triangle","name":"Lagrange Triangle","renderer":"bodies"},{"slug":"hierarchical-triple","name":"Hierarchical Triple","renderer":"bodies"},{"slug":"sun-and-planets","name":"Sun and Planets","renderer":"bodies"},{"slug":"double-pendulum","name":"Double Pendulum","renderer":"bodies"},{"slug":"triple-pendulum","name":"Triple Pendulum","renderer":"bodies"},{"slug":"gravity-disc","name":"Gravity Disc","renderer":"swarm"},{"slug":"springs","name":"Springs","renderer":"swarm"},{"slug":"molecules","name":"Molecules","renderer":"swarm"},{"slug":"rose-20","name":"Rose 20","renderer":"polar"},{"slug":"cubic-spiral-sink","name":"Cubic Spiral Sink","renderer":"flow"},{"slug":"bellman-3-3","name":"Bellman 3×3","renderer":"bellman"},{"slug":"russell-norvig-4-3","name":"Russell–Norvig 4×3","renderer":"bellman"},{"slug":"cliff-walk","name":"Cliff Walk","renderer":"bellman"},{"slug":"maze","name":"Maze","renderer":"bellman"},{"slug":"laplace-transform","name":"Laplace Transform","renderer":"surface"},{"slug":"huygens-slit","name":"Huygens Slit","renderer":"surface"},{"slug":"huygens-slits","name":"Huygens Slits","renderer":"surface"},{"slug":"drumhead","name":"Drumhead","renderer":"surface"},{"slug":"charged-rod","name":"Charged Rod","renderer":"surface"},{"slug":"chirp-transform","name":"Chirp Transform","renderer":"surface"},{"slug":"heat-kernel","name":"Heat Kernel","renderer":"wave"},{"slug":"uncertainty","name":"Uncertainty","renderer":"wave"},{"slug":"normal-distribution","name":"Normal Distribution","renderer":"wave"},{"slug":"gamma-function","name":"Gamma Function","renderer":"wave"},{"slug":"pendulum-period","name":"Pendulum Period","renderer":"wave"},{"slug":"gaussian-blur","name":"Gaussian Blur","renderer":"wave"},{"slug":"logarithmic-integral","name":"Logarithmic Integral","renderer":"wave"},{"slug":"euler-spiral","name":"Euler Spiral","renderer":"curve"},{"slug":"fresnel-phasor","name":"Fresnel Phasor","renderer":"curve"},{"slug":"antenna-beam","name":"Antenna Beam","renderer":"polar"},{"slug":"kronig-penney","name":"Kronig–Penney","renderer":"quantum"},{"slug":"smooth-step","name":"Smooth Step","renderer":"quantum"},{"slug":"soft-corral","name":"Soft Corral","renderer":"quantum2d"},{"slug":"square-petal","name":"Square Petal","renderer":"polar"},{"slug":"square-orbit","name":"Square Orbit","renderer":"curve"},{"slug":"partial-sums","name":"Partial Sums","renderer":"wave"},{"slug":"taylor-sine","name":"Taylor Sine","renderer":"wave"},{"slug":"viete-product","name":"Viete Product","renderer":"wave"},{"slug":"gamma-poles","name":"Gamma Poles","renderer":"wave"},{"slug":"piecewise","name":"Piecewise","renderer":"wave"},{"slug":"membrane-modes","name":"Membrane Modes","renderer":"surface"},{"slug":"diffraction","name":"Diffraction","renderer":"surface"},{"slug":"diffusion-front","name":"Diffusion Front","renderer":"surface"},{"slug":"gradient-flow","name":"Gradient Flow","renderer":"flow"},{"slug":"chain-rule","name":"Chain Rule","renderer":"wave"},{"slug":"tangent-tube","name":"Tangent Tube","renderer":"shape"},{"slug":"crest-doubling","name":"Crest Doubling","renderer":"wave"},{"slug":"resonance-curve","name":"Resonance Curve","renderer":"wave"},{"slug":"launch-angle","name":"Launch Angle","renderer":"wave"},{"slug":"dispersion","name":"Dispersion","renderer":"wave"},{"slug":"rational-rose","name":"Rational Rose","renderer":"polar"},{"slug":"gielis-supershape","name":"Gielis Supershape","renderer":"polar"},{"slug":"focal-conic","name":"Focal Conic","renderer":"polar"},{"slug":"chladni-plate","name":"Chladni Plate","renderer":"surface"},{"slug":"cusp-catastrophe","name":"Cusp Catastrophe","renderer":"surface"},{"slug":"knot-family","name":"Knot Family","renderer":"curve"},{"slug":"horn-torus","name":"Horn Torus","renderer":"shape"},{"slug":"superellipsoid","name":"Superellipsoid","renderer":"shape"},{"slug":"julia-dials","name":"Julia Dials","renderer":"complex"},{"slug":"multibrot","name":"Multibrot","renderer":"complex"},{"slug":"newton-petals","name":"Newton Petals","renderer":"complex"},{"slug":"barrier-or-well","name":"Barrier or Well","renderer":"quantum"},{"slug":"reflectionless-well","name":"Reflectionless Well","renderer":"quantum"},{"slug":"squeezed-packet","name":"Squeezed Packet","renderer":"quantum"},{"slug":"hopf-bifurcation","name":"Hopf Bifurcation","renderer":"flow"},{"slug":"van-der-pol","name":"Van der Pol","renderer":"flow"},{"slug":"driven-springs","name":"Driven Springs","renderer":"swarm"},{"slug":"rutherford-scattering","name":"Rutherford Scattering","renderer":"bodies"},{"slug":"ring-trap","name":"Ring Trap","renderer":"bodies"},{"slug":"coupled-oscillators","name":"Coupled Oscillators","renderer":"bodies"},{"slug":"bead-string","name":"Bead String","renderer":"bodies"},{"slug":"lagrange-points","name":"Lagrange Points","renderer":"bodies"},{"slug":"roche-lobe","name":"Roche Lobe","renderer":"bodies"},{"slug":"spring-pendulum","name":"Spring Pendulum","renderer":"bodies"},{"slug":"elastic-chaos","name":"Elastic Chaos","renderer":"bodies"},{"slug":"horseshoe-orbit","name":"Horseshoe Orbit","renderer":"bodies"},{"slug":"quadric-family","name":"Quadric Family","renderer":"shape"},{"slug":"paraboloid-family","name":"Paraboloid Family","renderer":"surface"},{"slug":"burgers-vortex","name":"Burgers Vortex","renderer":"flow"},{"slug":"rabi-oscillation","name":"Rabi Oscillation","renderer":"curve"},{"slug":"supershape-urchin","name":"Supershape Urchin","renderer":"shape"},{"slug":"supershape-pagoda","name":"Supershape Pagoda","renderer":"shape"},{"slug":"supershape-flower","name":"Supershape Flower","renderer":"shape"},{"slug":"hypotrochoid-7-13","name":"Hypotrochoid 7/13","renderer":"curve"},{"slug":"hypotrochoid-7-5","name":"Hypotrochoid 7/5","renderer":"curve"},{"slug":"hypotrochoid-3-4","name":"Hypotrochoid 3/4","renderer":"curve"},{"slug":"helicoid-to-catenoid","name":"Helicoid to Catenoid","renderer":"shape"},{"slug":"residue-staircase","name":"Residue Staircase","renderer":"wave"},{"slug":"lyapunov-descent","name":"Lyapunov Descent","renderer":"curve"},{"slug":"kuen-surface","name":"Kuen Surface","renderer":"shape"},{"slug":"aizawa-attractor","name":"Aizawa Attractor","renderer":"flow"},{"slug":"einstein-rosen-bridge","name":"Einstein–Rosen Bridge","renderer":"shape"},{"slug":"magnetic-field-line","name":"Magnetic Field Line","renderer":"curve"},{"slug":"spinning-drum-mode","name":"Spinning Drum Mode","renderer":"surface"},{"slug":"orbiting-poles","name":"Orbiting Poles","renderer":"complex"},{"slug":"quartic-well","name":"Quartic Well","renderer":"quantum"},{"slug":"enneper-surface","name":"Enneper Surface","renderer":"shape"},{"slug":"four-wing-attractor","name":"Four-Wing Attractor","renderer":"flow"}]};
+const window = {Wavelace: {MODES: TABLES.modes}};
+/* Wavelace · link-codec — what a link says after its #, and how it is spelt
+ * reads:   MODES, VIEWS
+ * exports: DIAL_IDS, CAM_KEYS, LINK_FLAGS, HASH_KEY, packFree, encodeHash, decodeHash
+ *
+ * The link's vocabulary, the dials, the camera's keys and the on/off options, and the two functions that write a
+ * plot into a link and read one back. session.js puts what a link says into the app; this file only spells it. */
+(() => {
+"use strict";
+const WL = window.Wavelace = window.Wavelace || {};
+const {MODES, VIEWS} = WL;
+
+const DIAL_IDS = ["span","speed","amp","depth","turns","vspan","x0","y0","z0","seeds","sigma","k0"];   // also the hash key order
+const CAM_KEYS = ["tx","ty","tz","dist","yaw","pitch"];
+// the on/off options a link may carry, each with the value a link means by leaving it out: play and
+// spin are the deck's, ground, trace, fill and maths (the plate's notation) the plot's, the rest the embed page's
+const LINK_FLAGS = {playing: true, spin: false, ground: true, trace: false, particles: true, fill: true, maths: true,
+                    deck: true, formula: true, title: true, orbit: true, pan: true};
+const HASH_KEY = {playing: "play"};              // where a field's hash key is not its name
+
+const keyOf = field => HASH_KEY[field] || field;   // a field's key in the hash
+const packFree = free => Object.entries(free).map(([n, v]) => `${n}:${v}`).join(",");   // the let key's spelling, and fnKey's
+
+/* A plot into a link: the snapshot's fields (session.js's snapshot, or part of one), each written only when given and
+ * each option only when it differs from what a link means without it. The app's own snapshot carries the whole plot,
+ * the embed package's options as much of it as they name; whatever a link leaves out, the app fills in on the way in. */
+function encodeHash(d){
+  const q = new URLSearchParams();
+  writePlot(q, d);
+  writeFormula(q, d);
+  writeDials(q, d);
+  writeFree(q, d);
+  writeCamera(q, d);
+  writeOptions(q, d);
+  return q.toString();
+}
+// the renderer, the name, and the preset on show or the one an edited formula came from
+function writePlot(q, d){
+  if(d.mode !== undefined){
+    // an assertion, not a guard: no link reaches it, and it keeps the encoder from writing one the decoder refuses
+    if(!Object.hasOwn(MODES, d.mode)) throw new Error(`no such renderer: ${d.mode}`);
+    q.set("m", d.mode);
+  }
+  if(d.name != null) q.set("n", d.name);
+  if(d.from != null) q.set("p", d.from);
+}
+// the formula, which only its renderer can say is one expression or three
+function writeFormula(q, d){
+  if(d.mode === undefined) return;
+  if(MODES[d.mode].triple){ if(d.exprs) for(const k of ["x", "y", "z"]) q.set(`f${k}`, d.exprs[k]); }
+  else if(d.expr != null) q.set("f", d.expr);
+}
+function writeDials(q, d){
+  for(const k of DIAL_IDS) if(d[k] != null) q.set(k, (+d[k]).toFixed(3));
+}
+// the free names, name:value and comma-joined under one key: a name is a single letter, and m, n, p and f are
+// already keys of this codec's own
+function writeFree(q, d){
+  if(d.free && Object.keys(d.free).length) q.set("let", packFree(d.free));
+}
+function writeCamera(q, d){
+  if(d.cam) for(const k of CAM_KEYS) q.set(k, (+d.cam[k]).toFixed(3));
+}
+function writeOptions(q, d){
+  for(const k in LINK_FLAGS)
+    if(typeof d[k] === "boolean" && d[k] !== LINK_FLAGS[k]) q.set(keyOf(k), d[k] ? "1" : "0");
+  if(d.theme === "light" || d.theme === "dark") q.set("theme", d.theme);   // following the system says nothing
+  if(d.zoom === false) q.set("zoom", "0");
+  if(d.zoom === "always") q.set("zoom", "always");
+  if(d.view){                                                // a named view overrides the angle, fit the whole camera
+    q.set("view", d.view);
+    for(const k of d.view === "fit" ? CAM_KEYS : ["yaw", "pitch"]) q.delete(k);
+  }
+}
+// the plot, plus what a link may say: the LINK_FLAGS, view, theme, and zoom (0 takes the wheel,
+// "always" is a wheel that needs no click or ctrl); undefined where the link does not say
+const ZOOM_WORDS = {"0": false, "always": "always"};
+function decodeHash(hash){
+  const text = hash.replace(/^#/, "");
+  if(!text) return null;
+  const q = new URLSearchParams(text);
+  const d = {mode: q.get("m"), name: q.get("n") || "Custom", expr: q.get("f"), cam: {}};
+  if(q.get("fx") != null) d.exprs = {x:q.get("fx"), y:q.get("fy") || "0", z:q.get("fz") || "0"};
+  if(q.has("p")) d.preset = q.get("p");
+  for(const k of DIAL_IDS) d[k] = parseFloat(q.get(k));
+  if(q.has("let")) d.free = readFree(q.get("let"));
+  for(const k of CAM_KEYS)  d.cam[k] = parseFloat(q.get(k));
+  for(const k in LINK_FLAGS) d[k] = q.has(keyOf(k)) ? q.get(keyOf(k)) !== "0" : undefined;
+  const zoom = q.get("zoom");
+  d.zoom = Object.hasOwn(ZOOM_WORDS, zoom) ? ZOOM_WORDS[zoom] : undefined;
+  const view = q.get("view");
+  if(view && (Object.hasOwn(VIEWS, view) || view === "fit")) d.view = view;
+  if(q.has("theme")) d.theme = q.get("theme");
+  return d;
+}
+// the let key's letters and values, parsed only: applyFree in session.js is the gate, as applyDials is for the dials
+const readFree = text => Object.fromEntries(text.split(",").map(pair => { const [n, v] = pair.split(":"); return [n, parseFloat(v)]; }));
+
+Object.assign(WL, {DIAL_IDS, CAM_KEYS, LINK_FLAGS, HASH_KEY, packFree, encodeHash, decodeHash});
+})();
+
 /* Wavelace · embed — options into a link to Wavelace's embed page, and an iframe of it
  *
- * The package's module: tools/pkg.js writes TABLES in front of this file, read out of the app (its link
- * flags and their hash keys, the dials, the renderers, the views and every preset by index), so what the
- * link must agree with is never copied by hand. The rest is written here rather than generated, because
- * the app's own codec (encodeHash in js/session.js) is tied to its state; test/embed-pkg.test.js reads
- * every kind of link this writes back through the app's decodeHash and applySnapshot. A preset alone is a
- * whole link, p=<index> plus what differs, which is the form the app already reads. */
+ * The package's module: tools/pkg.js writes in front of this file TABLES, read out of the app (the renderers, the
+ * views and every preset by index), and the app's own link codec, js/link-codec.js, as it is. So the options here are
+ * turned into the fields of a plot and spelt by the codec the app spells its own links with, and nothing a link must
+ * agree with is copied by hand; test/embed-pkg.test.js reads every kind of link this writes back through the app's
+ * decodeHash and applySnapshot. A preset alone is a whole link, p=<index> plus what differs, which is the form the
+ * app already reads. */
+
+const {DIAL_IDS, LINK_FLAGS, encodeHash} = window.Wavelace;   // the app's link codec
 
 const SITE = "https://www.wavelace.com";
 // the Embed panel's own sizes (js/ui-embed.js), which the test holds these to: a style as the DOM spells it,
@@ -21,18 +124,17 @@ const SIZES = {
 // the reader's word for a flag whose app name would read wrong here: the embed's formula flag shows the
 // formula panel, and formula is the text to draw
 const OPTION_OF_FLAG = {playing: "play", formula: "showFormula"};
-const FLAG_OF_OPTION = Object.fromEntries(Object.keys(TABLES.flags).map(flag => [OPTION_OF_FLAG[flag] ?? flag, flag]));
+const FLAG_OF_OPTION = Object.fromEntries(Object.keys(LINK_FLAGS).map(flag => [OPTION_OF_FLAG[flag] ?? flag, flag]));
 const OPTIONS = ["preset", "formula", "formulas", "renderer", "name", "values", "dials", "theme", "view", "zoom", "site",
                  ...Object.keys(FLAG_OF_OPTION)];
 const THEMES = ["light", "dark"], ZOOMS = ["click", "always", false];
 
 export const PRESETS = TABLES.presets;
-export const RENDERERS = TABLES.renderers;
+export const RENDERERS = Object.keys(TABLES.modes);
 
 export function embedUrl(options){
   validate(options);
-  const pairs = [...presetPart(options), ...formulaPart(options), ...valuePart(options), ...lookPart(options)];
-  return `${siteOf(options)}/embed#${new URLSearchParams(pairs.filter(([, value]) => value !== undefined))}`;
+  return `${siteOf(options)}/embed#${encodeHash(plotOf(options))}`;
 }
 
 export function embedHtml(options, size = "4:3"){
@@ -63,28 +165,13 @@ export function embed(container, options, size = "4:3"){
   };
 }
 
-/* ---------- the link, part by part: [key, value] pairs, a value left undefined when the link says nothing ---------- */
-const presetPart = ({preset}) => [["p", preset === undefined ? undefined : String(presetIndex(preset))]];
-
-function formulaPart({formula, formulas, renderer, name}){
-  if(formula === undefined && formulas === undefined) return [];
-  const text = formulas ? [["fx", formulas.x], ["fy", formulas.y], ["fz", formulas.z]] : [["f", formula]];
-  return [["m", renderer], ["n", name], ...text];
+/* ---------- the link: the options as the fields of a plot, which the codec spells as the app does ---------- */
+function plotOf(options){
+  const {preset, renderer, name, formula, formulas, values = {}, dials = {}, theme, zoom, view} = options;
+  const flags = Object.entries(FLAG_OF_OPTION).map(([option, flag]) => [flag, options[option]]);
+  return {from: preset === undefined ? undefined : presetIndex(preset), mode: renderer, name, expr: formula, exprs: formulas,
+          free: values, ...dials, ...Object.fromEntries(flags), theme, zoom, view};
 }
-
-function valuePart({values = {}, dials = {}}){
-  const letters = Object.entries(values).map(([name, value]) => `${name}:${value}`);
-  return [["let", letters.length ? letters.join(",") : undefined],
-          ...TABLES.dials.map(dial => [dial, dials[dial] === undefined ? undefined : String(dials[dial])])];
-}
-
-// what the link says only when it differs from what the embed does without it, as the app's own links do
-function lookPart(options){
-  const flags = Object.entries(FLAG_OF_OPTION).map(([option, flag]) => [TABLES.hashKeys[flag] ?? flag, flagValue(options[option], flag)]);
-  return [...flags, ["theme", options.theme], ["zoom", ZOOM_VALUE.get(options.zoom)], ["view", options.view]];
-}
-const flagValue = (on, flag) => on === undefined || on === TABLES.flags[flag] ? undefined : on ? "1" : "0";
-const ZOOM_VALUE = new Map([["always", "always"], [false, "0"]]);   // click, the default, says nothing
 
 const siteOf = options => (options.site ?? SITE).replace(/\/+$/, "");
 
@@ -139,7 +226,7 @@ function validateFormula({formula, formulas, renderer}){
   if(formula !== undefined && formulas !== undefined) throw new Error("formula or formulas, not both: formulas is the three a curve or shape draws");
   if(renderer === undefined) throw new Error(`a formula needs its renderer: renderer is one of ${oneOf(RENDERERS)}`);
   if(!RENDERERS.includes(renderer)) throw new Error(`no renderer called ${renderer}: renderer is one of ${oneOf(RENDERERS)}`);
-  const triple = TABLES.triple.includes(renderer);
+  const triple = TABLES.modes[renderer].triple;
   if(triple && formulas === undefined) throw new Error(`${renderer} draws three formulas: pass formulas: {x, y, z}`);
   if(!triple && formula === undefined) throw new Error(`${renderer} draws one formula: pass formula`);
   for(const text of triple ? [formulas.x, formulas.y, formulas.z] : [formula])
@@ -152,7 +239,7 @@ function validateNumbers({values = {}, dials = {}}){
     if(!Number.isFinite(value)) throw new Error(`values.${name} is a number, not ${value}`);
   }
   for(const [dial, value] of Object.entries(dials)){
-    if(!TABLES.dials.includes(dial)) throw new Error(`no dial called ${dial}: dials are ${TABLES.dials.join(", ")}`);
+    if(!DIAL_IDS.includes(dial)) throw new Error(`no dial called ${dial}: dials are ${DIAL_IDS.join(", ")}`);
     if(!Number.isFinite(value)) throw new Error(`dials.${dial} is a number, not ${value}`);
   }
 }

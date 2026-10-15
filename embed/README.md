@@ -61,7 +61,7 @@ you give it a value. The dials are the ones on Wavelace's rail, speed among them
 import {embedUrl} from "@wavelace/embed";
 
 embedUrl({formula: "a \\sin(kx)", renderer: "wave", values: {a: 2, k: 3}, dials: {speed: 0.5}})
-// → "https://www.wavelace.com/embed#m=wave&f=a+%5Csin%28kx%29&let=a%3A2%2Ck%3A3&speed=0.5"
+// → "https://www.wavelace.com/embed#m=wave&f=a+%5Csin%28kx%29&speed=0.500&let=a%3A2%2Ck%3A3"
 ```
 
 ## How it looks and moves
