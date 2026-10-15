@@ -1,6 +1,6 @@
 {
   "name": "@wavelace/embed",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Wavelace's animated maths plots in your page: an iframe of any preset or formula, from a few options.",
   "keywords": [
     "math",
@@ -34,6 +34,7 @@
     "react.js",
     "react.d.ts",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "peerDependencies": {
