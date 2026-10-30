@@ -67,7 +67,8 @@ embedUrl({formula: "a \\sin(kx)", renderer: "wave", values: {a: 2, k: 3}, dials:
 ## How it looks and moves
 
 Only what differs from the embed's defaults is written into the link. Left out, the theme follows the
-reader's system, time runs, the camera turns only when dragged, and the wheel zooms after a click.
+reader's system, time runs, the camera turns only when dragged, and the wheel zooms after a click. On a touch
+screen one finger scrolls your page, two fingers turn the camera, and a pinch zooms.
 
 ```js
 import {embedUrl} from "@wavelace/embed";
@@ -101,7 +102,7 @@ embedHtml({preset: "chirp-wave"}, "16:9")
 
 `embed` appends the frame to an element and hands back `update`, which switches the plot in the same frame:
 the embed page reads a new link without reloading, the formula, the theme, what it shows around the plot and
-what the mouse may do alike. Only a new `site` puts a fresh frame in its place.
+what the pointer may do alike. Only a new `site` puts a fresh frame in its place.
 
 ```html
 <div id="plot"></div>
@@ -127,7 +128,7 @@ render it into a page and check each value marked `// →` once the page has ren
 ### A preset picker
 
 New props change the frame's link, which the embed page reads without reloading: the plot, the theme, what
-it shows around the plot and what the mouse may do alike. Only a new `site` puts a fresh frame in its place.
+it shows around the plot and what the pointer may do alike. Only a new `site` puts a fresh frame in its place.
 
 ```jsx
 import {useState} from "react";
@@ -251,10 +252,10 @@ embedUrl({preset: "chirp-wave", site: "https://preview.example.com"})   // → "
 | `dials` | Dial values: `span`, `speed`, `amp`, `depth`, `turns`, `vspan`, `x0`, `y0`, `z0`, `seeds`, `sigma`, `k0`. |
 | `theme` | `light` or `dark`; left out, the reader's system decides. |
 | `view` | `iso`, `top`, `front`, `side` or `fit`. |
-| `zoom` | `click` (the default), `always`, or `false`. |
+| `zoom` | `click` (the default), `always`, or `false`, which takes the pinch too. |
 | `play`, `spin`, `ground`, `trace`, `particles`, `fill`, `maths` | The plot's own switches. |
 | `deck`, `showFormula`, `title` | What the frame shows around the plot. |
-| `orbit`, `pan` | What the reader's mouse may do. |
+| `orbit`, `pan` | What the reader's mouse may do; `orbit` is a touch screen's two fingers too. |
 | `site` | Where Wavelace is served. |
 | `size` | `<Embed>` only (the functions take it as their second argument): `4:3`, `16:9`, `1:1` or `fill`. |
 | `className` | `<Embed>` only: a class for the frame. |

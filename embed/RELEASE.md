@@ -1,3 +1,3 @@
-- Changed a link's spelling to the app's own, now that the package writes links with the app's code: a dial's value is written to three decimals and the keys come in the app's order. Every link opens what it opened.
+- Fixed the README on what `orbit` and `zoom` do on a touch screen, where one finger now scrolls the page.
 
-Published to npm with provenance: https://www.npmjs.com/package/@wavelace/embed/v/0.3.0
+Published to npm with provenance: https://www.npmjs.com/package/@wavelace/embed/v/0.3.1

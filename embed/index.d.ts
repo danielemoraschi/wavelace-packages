@@ -29,7 +29,7 @@ export interface EmbedOptions {
   /** Light or dark; left out, the embed follows the reader's system. */
   theme?: "light" | "dark";
   view?: View;
-  /** click (the default): the wheel zooms only after a click; always; or false, never. */
+  /** click (the default): the wheel zooms only after a click; always; or false, never, nor a pinch. */
   zoom?: "click" | "always" | false;
   /** Whether time runs (default true). */
   play?: boolean;
@@ -47,7 +47,7 @@ export interface EmbedOptions {
   showFormula?: boolean;
   /** The plot's title (default true). */
   title?: boolean;
-  /** Dragging turns the camera (default true). */
+  /** Dragging, or two fingers on a touch screen, turns the camera (default true). */
   orbit?: boolean;
   /** Right-dragging moves it (default true). */
   pan?: boolean;

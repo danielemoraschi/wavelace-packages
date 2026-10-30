@@ -2,6 +2,12 @@
 
 What changed in @wavelace/embed, newest first. Wavelace's own changes, the app's and the site's, are at https://www.wavelace.com/changelog.
 
+## 0.3.1
+
+30 October 2026
+
+- Fixed the README on what `orbit` and `zoom` do on a touch screen, where one finger now scrolls the page.
+
 ## 0.3.0
 
 15 October 2026
