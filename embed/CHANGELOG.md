@@ -2,6 +2,13 @@
 
 What changed in @wavelace/embed, newest first. Wavelace's own changes, the app's and the site's, are at https://www.wavelace.com/changelog.
 
+## 0.3.2
+
+14 November 2026
+
+- Added the [Cyclotron Pair](https://www.wavelace.com/presets/cyclotron-pair) and [Crossed Fields](https://www.wavelace.com/presets/crossed-fields) presets, `cyclotron-pair` and `crossed-fields`.
+- Added the preset `garden-rose`.
+
 ## 0.3.1
 
 30 October 2026
