@@ -2,6 +2,12 @@
 
 What changed in @wavelace/embed, newest first. Wavelace's own changes, the app's and the site's, are at https://www.wavelace.com/changelog.
 
+## 0.3.3
+
+15 November 2026
+
+- Added the `implicit` renderer and its presets `tube-lattice`, `schwarz-diamond`, `diamond-struts` and `barth-sextic`.
+
 ## 0.3.2
 
 14 November 2026

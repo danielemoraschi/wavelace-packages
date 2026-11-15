@@ -3,7 +3,7 @@
  * own tables by the Wavelace source's tests. */
 
 /** Wavelace's renderers: how a formula is drawn. */
-export type Renderer = "wave" | "polar" | "surface" | "curve" | "shape" | "complex" | "quantum" | "quantum2d" | "flow" | "swarm" | "bodies" | "bellman";
+export type Renderer = "wave" | "polar" | "surface" | "curve" | "shape" | "complex" | "quantum" | "quantum2d" | "flow" | "swarm" | "bodies" | "bellman" | "implicit";
 /** The dials a link may set, as the app's rail names them. */
 export type Dial = "span" | "speed" | "amp" | "depth" | "turns" | "vspan" | "x0" | "y0" | "z0" | "seeds" | "sigma" | "k0";
 /** A named camera angle; fit frames the whole plot. */
